@@ -1,0 +1,107 @@
+<?php
+
+// Tự động xác định BASE_URL nếu chưa cấu hình
+if (!function_exists('base_url')) {
+    function base_url(string $path = ''): string
+    {
+        static $baseUrl = null;
+        if ($baseUrl === null) {
+            $config = require __DIR__ . '/../../config/app.php';
+            if (!empty($config['base_url'])) {
+                $baseUrl = rtrim($config['base_url'], '/');
+            } elseif (PHP_SAPI === 'cli') {
+                $baseUrl = 'http://localhost/www/ban%20giay2';
+            } else {
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+                $scriptDir = ($scriptName === '/' || $scriptName === '.') ? '' : $scriptName;
+                $baseUrl = rtrim($protocol . $host . $scriptDir, '/');
+            }
+        }
+        return $baseUrl . ($path ? '/' . ltrim($path, '/') : '');
+    }
+}
+
+if (!function_exists('route_url')) {
+    function route_url(string $act = '', array $params = []): string
+    {
+        $query = [];
+        if ($act !== '') {
+            $query['act'] = $act;
+        }
+        foreach ($params as $k => $v) {
+            $query[$k] = $v;
+        }
+        $queryString = http_build_query($query);
+        return base_url($queryString ? 'index.php?' . $queryString : '');
+    }
+}
+
+if (!function_exists('asset')) {
+    function asset(string $path): string
+    {
+        return base_url('public/' . ltrim($path, '/'));
+    }
+}
+
+if (!function_exists('format_price')) {
+    function format_price($price): string
+    {
+        return number_format((float)$price, 0, ',', '.') . ' ₫';
+    }
+}
+
+if (!function_exists('redirect')) {
+    function redirect(string $url): void
+    {
+        header('Location: ' . $url);
+        exit;
+    }
+}
+
+if (!function_exists('set_flash')) {
+    function set_flash(string $key, string $message, string $type = 'success'): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['flash'][$key] = [
+            'message' => $message,
+            'type'    => $type
+        ];
+    }
+}
+
+if (!function_exists('get_flash')) {
+    function get_flash(string $key): ?array
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (isset($_SESSION['flash'][$key])) {
+            $flash = $_SESSION['flash'][$key];
+            unset($_SESSION['flash'][$key]);
+            return $flash;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('auth')) {
+    function auth(): ?array
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        return $_SESSION['user'] ?? null;
+    }
+}
+
+if (!function_exists('is_admin')) {
+    function is_admin(): bool
+    {
+        $user = auth();
+        return $user && ($user['role'] === 'admin' || (isset($user['roles']) && in_array('admin', $user['roles'])));
+    }
+}
