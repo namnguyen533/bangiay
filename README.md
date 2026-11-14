@@ -31,7 +31,7 @@ Hệ thống website bán giày trực tuyến được xây dựng hoàn chỉn
                       ▼                       │                       │
               ┌───────────────┐               │ Trả dữ liệu Data      │ Render
               │ MySQL Database│───────────────┘───────────────────────┘
-              │ (`shoe_store`)│
+              │ (`bangiay2`) │
               └───────────────┘
 ```
 
@@ -79,7 +79,6 @@ ban giay2/
 ├── config/
 │   ├── app.php                  # Cấu hình website
 │   └── database.php             # Cấu hình kết nối MySQL
-├── database.sql                 # CSDL mẫu đầy đủ bảng & dữ liệu test
 ├── index.php                    # Front Controller - Điểm đón request duy nhất
 ├── .htaccess                    # Rewrite URL thân thiện trên Apache
 └── README.md
@@ -100,7 +99,7 @@ Khác với các mặt hàng thông thường (như sách hay điện thoại), 
 
 ### Cách 1: Chạy trực tiếp qua Laragon (Khuyên dùng)
 1. Bật **Laragon** (Start All: Apache & MySQL).
-2. Đảm bảo database `shoe_store` đã được tạo và import file `database.sql` (bằng HeidiSQL hoặc phpMyAdmin).
+2. Đảm bảo database `bangiay2` đã tồn tại trong MySQL của Laragon và ứng dụng được cấu hình kết nối tới database đó.
 3. Mở trình duyệt và truy cập:
    - Trang người dùng: `http://localhost/www/ban%20giay2/`
    - Hoặc tên miền ảo (nếu có): `http://ban-giay2.test/`
