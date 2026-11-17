@@ -1,45 +1,59 @@
-<div class="container my-5" style="max-width: 520px;">
-    <div class="bg-white p-4 p-md-5 rounded-4 border shadow-sm">
-        <div class="text-center mb-4">
-            <i class="fa-solid fa-user-plus fs-1 text-danger mb-2"></i>
-            <h3 class="fw-bold">Tạo Tài Khoản Mới</h3>
-            <p class="text-secondary small">Trở thành thành viên SoleVibe nhận ngập tràn ưu đãi</p>
-        </div>
-
-        <form action="<?= route_url('post-register') ?>" method="POST">
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Họ và Tên <span class="text-danger">*</span></label>
-                <input type="text" name="full_name" class="form-control" placeholder="Nguyễn Văn A" required>
+<main class="auth-page container">
+    <div class="auth-card">
+        <section class="auth-showcase" aria-label="Giới thiệu SoleVibe">
+            <div>
+                <span class="auth-brand-mark"><i class="fa-solid fa-shoe-prints"></i></span>
+                <p class="auth-eyebrow text-white-50">Gia nhập cộng đồng</p>
+                <h1>Mỗi đôi giày là một câu chuyện của riêng bạn.</h1>
+                <p class="auth-showcase-copy">Tạo tài khoản SoleVibe để lưu lại hành trình phong cách và khám phá những ưu đãi dành riêng cho bạn.</p>
+                <ul class="auth-benefits">
+                    <li><i class="fa-solid fa-tags"></i><span>Ưu đãi thành viên</span></li>
+                    <li><i class="fa-solid fa-heart"></i><span>Khám phá phong cách</span></li>
+                    <li><i class="fa-solid fa-shield-halved"></i><span>Mua sắm an tâm</span></li>
+                </ul>
             </div>
+            <p class="auth-showcase-note mb-0">Bước đi tự tin. Phong cách khác biệt.</p>
+        </section>
 
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Email Đăng Ký <span class="text-danger">*</span></label>
-                <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+        <section class="auth-form-panel">
+            <div class="auth-form-content">
+                <p class="auth-eyebrow">Bắt đầu ngay hôm nay</p>
+                <h2 class="auth-form-title">Tạo tài khoản</h2>
+                <p class="auth-form-subtitle">Điền thông tin bên dưới để trở thành thành viên SoleVibe.</p>
+
+                <form action="<?= route_url('post-register') ?>" method="POST" class="auth-form">
+                    <div class="mb-3">
+                        <label for="registerName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                        <input type="text" id="registerName" name="full_name" class="form-control" placeholder="Nguyễn Văn A" autocomplete="name" minlength="2" maxlength="100" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="registerEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" id="registerEmail" name="email" class="form-control" placeholder="ban@email.com" autocomplete="email" maxlength="254" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="registerPhone" class="form-label">Số điện thoại</label>
+                        <input type="tel" id="registerPhone" name="phone" class="form-control" placeholder="0912 345 678" autocomplete="tel" maxlength="20">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="registerPassword" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                        <input type="password" id="registerPassword" name="password" class="form-control" placeholder="Tạo mật khẩu (ít nhất 8 ký tự)" autocomplete="new-password" minlength="8" maxlength="72" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="registerConfirmPassword" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                        <input type="password" id="registerConfirmPassword" name="confirm_password" class="form-control" placeholder="Nhập lại mật khẩu" autocomplete="new-password" minlength="8" maxlength="72" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-submit w-100 fw-bold">
+                        Tạo tài khoản <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </form>
+
+                <p class="auth-switch">Đã có tài khoản? <a href="<?= route_url('login') ?>">Đăng nhập</a></p>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Số Điện Thoại</label>
-                <input type="tel" name="phone" class="form-control" placeholder="0912345678">
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Mật Khẩu <span class="text-danger">*</span></label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label fw-semibold">Xác Nhận Mật Khẩu <span class="text-danger">*</span></label>
-                <input type="password" name="confirm_password" class="form-control" placeholder="••••••••" required>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold mb-3">
-                <i class="fa-solid fa-user-check me-2"></i> Đăng Ký Tài Khoản
-            </button>
-        </form>
-
-        <div class="text-center mt-3">
-            <span class="text-secondary small">Đã có tài khoản?</span>
-            <a href="<?= route_url('login') ?>" class="small text-danger fw-bold text-decoration-none ms-1">Đăng nhập ngay</a>
-        </div>
+        </section>
     </div>
-</div>
+</main>
