@@ -97,19 +97,8 @@ Khác với các mặt hàng thông thường (như sách hay điện thoại), 
 
 ## 4. Hướng Dẫn Cài Đặt & Chạy Website
 
-### Cách 1: Chạy trực tiếp qua Laragon (Khuyên dùng)
-1. Bật **Laragon** (Start All: Apache & MySQL).
-2. Đảm bảo database `bangiay2` đã tồn tại trong MySQL của Laragon và ứng dụng được cấu hình kết nối tới database đó.
-3. Mở trình duyệt và truy cập:
-   - Trang người dùng: `http://localhost/www/ban%20giay2/`
-   - Hoặc tên miền ảo (nếu có): `http://ban-giay2.test/`
-
-### Cách 2: Chạy bằng PHP Built-in Server
-Mở Terminal / PowerShell tại thư mục `c:\laragon\www\www\ban giay2`:
-```powershell
-php -S localhost:8000
-```
-Truy cập: `http://localhost:8000/`
+### Chạy nhanh trên Windows
+Nhấp đúp vào file `chay_web.bat` trong thư mục dự án. Trình duyệt sẽ tự mở website tại `http://127.0.0.1:8000/`. Giữ cửa sổ màu đen đang mở khi sử dụng website; đóng cửa sổ đó sẽ dừng website.
 
 ---
 
