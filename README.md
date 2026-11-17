@@ -99,17 +99,21 @@ Khác với các mặt hàng thông thường (như sách hay điện thoại), 
 
 ### Cách 1: Chạy trực tiếp qua Laragon (Khuyên dùng)
 1. Bật **Laragon** (Start All: Apache & MySQL).
-2. Đảm bảo database `bangiay2` đã tồn tại trong MySQL của Laragon và ứng dụng được cấu hình kết nối tới database đó.
-3. Mở trình duyệt và truy cập:
-   - Trang người dùng: `http://localhost/www/ban%20giay2/`
-   - Hoặc tên miền ảo (nếu có): `http://ban-giay2.test/`
+2. Tạo database bằng cách import file `bangiay2.sql` trong phpMyAdmin hoặc HeidiSQL. File SQL sẽ tạo database `bangiay2` và dữ liệu mẫu.
+3. Kiểm tra thông tin kết nối trong `config/database.php` (mặc định Laragon: host `127.0.0.1`, port `3306`, user `root`, mật khẩu để trống).
+4. Mở trình duyệt và truy cập:
+   - Trang người dùng: `http://localhost/webbangiay/bangiay/`
+   - Hoặc dùng URL trực tiếp: `http://localhost/webbangiay/bangiay/index.php`
 
 ### Cách 2: Chạy bằng PHP Built-in Server
-Mở Terminal / PowerShell tại thư mục `c:\laragon\www\www\ban giay2`:
+Mở **Laragon Terminal** tại thư mục dự án `C:\laragon\www\webbangiay\bangiay` rồi chạy:
 ```powershell
 php -S localhost:8000
 ```
-Truy cập: `http://localhost:8000/`
+Truy cập: `http://localhost:8000/`. Nếu chạy trong PowerShell thông thường và lệnh `php` không được nhận diện, hãy chạy bằng `php.exe` trong thư mục PHP đang chọn của Laragon, ví dụ:
+```powershell
+C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe -S localhost:8000
+```
 
 ---
 
