@@ -99,9 +99,10 @@ Khác với các mặt hàng thông thường (như sách hay điện thoại), 
 
 ### Cách 1: Chạy trực tiếp qua Laragon (Khuyên dùng)
 1. Bật **Laragon** (Start All: Apache & MySQL).
-2. Tạo database bằng cách import file `bangiay2.sql` trong phpMyAdmin hoặc HeidiSQL. File SQL sẽ tạo database `bangiay2` và dữ liệu mẫu.
-3. Kiểm tra thông tin kết nối trong `config/database.php` (mặc định Laragon: host `127.0.0.1`, port `3306`, user `root`, mật khẩu để trống).
-4. Mở trình duyệt và truy cập:
+2. Đảm bảo database `bangiay2` đã có các bảng nền của ứng dụng (`users`, `products`, `product_variants`, `categories`, `brands` và các bảng đơn hàng).
+3. Import file `database/feature_migration.sql` vào database `bangiay2` một lần để tạo bảng phiếu nhập kho và đánh giá. File migration không xóa hoặc sửa dữ liệu hiện có.
+4. Kiểm tra thông tin kết nối trong `config/database.php` (mặc định Laragon: host `127.0.0.1`, port `3306`, user `root`, mật khẩu để trống).
+5. Mở trình duyệt và truy cập:
    - Trang người dùng: `http://localhost/webbangiay/bangiay/`
    - Hoặc dùng URL trực tiếp: `http://localhost/webbangiay/bangiay/index.php`
 
@@ -117,7 +118,16 @@ C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe -S localhost:8000
 
 ---
 
-## 5. Tài Khoản Kiểm Thử
+## 5. Các Chức Năng Quản Trị
+
+- Danh mục hỗ trợ cây nhiều cấp; thương hiệu và danh mục được dùng trực tiếp trong bộ lọc cửa hàng và biểu mẫu sản phẩm.
+- Sản phẩm có thể tải tối đa 8 ảnh JPG/PNG/WebP (5 MB/ảnh), quản lý mô tả và nhiều biến thể size/màu với giá riêng; SKU được tạo tự động nếu để trống.
+- Tồn kho chỉ tăng qua phiếu nhập theo từng SKU. Biến thể có tồn không quá 5 đôi được cảnh báo sắp hết; xóa sản phẩm sẽ chuyển sang ẩn để giữ lịch sử kho/đơn.
+- Khách hàng đăng nhập để gửi một đánh giá cho mỗi sản phẩm. Đánh giá chờ duyệt; quản trị viên có thể hiển thị, ẩn và phản hồi. Đánh giá được duyệt xuất hiện ở trang chi tiết sản phẩm.
+
+---
+
+## 6. Tài Khoản Kiểm Thử
 
 | Vai trò | Email | Mật khẩu | Chức năng |
 |---|---|---|---|

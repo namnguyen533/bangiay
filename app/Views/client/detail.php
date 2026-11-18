@@ -12,13 +12,13 @@
         <!-- Cột Ảnh Sản Phẩm -->
         <div class="col-lg-6">
             <div class="bg-white p-3 rounded-4 border shadow-sm mb-3 text-center">
-                <img id="mainProductImg" src="<?= htmlspecialchars($product['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="img-fluid rounded-3" style="max-height: 450px; object-fit: contain; width: 100%;">
+                <img id="mainProductImg" src="<?= htmlspecialchars(image_src($product['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="img-fluid rounded-3" style="max-height: 450px; object-fit: contain; width: 100%;">
             </div>
 
             <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
                 <div class="d-flex gap-2 overflow-auto py-2">
                     <?php foreach ($product['images'] as $img): ?>
-                        <img src="<?= htmlspecialchars($img['image_url']) ?>" alt="Thumbnail" class="rounded-3 border cursor-pointer thumbnail-img" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;" onclick="document.getElementById('mainProductImg').src = this.src">
+                        <img src="<?= htmlspecialchars(image_src($img['image_url'])) ?>" alt="Thumbnail" class="rounded-3 border cursor-pointer thumbnail-img" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;" onclick="document.getElementById('mainProductImg').src = this.src">
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -133,6 +133,54 @@
         </div>
     </div>
 
+    <section class="my-5 bg-white p-4 p-md-5 rounded-4 border shadow-sm">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-4">
+            <h4 class="fw-bold mb-0"><i class="fa-solid fa-star text-warning me-2"></i>Đánh Giá Sản Phẩm</h4>
+            <span class="text-secondary"><?= count($reviews) ?> đánh giá đã duyệt</span>
+        </div>
+        <?php if (!empty($reviews)): ?>
+            <?php foreach ($reviews as $review): ?>
+                <article class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong><?= htmlspecialchars($review['full_name']) ?></strong>
+                        <time class="small text-secondary"><?= htmlspecialchars($review['created_at']) ?></time>
+                    </div>
+                    <div class="text-warning mb-2"><?= str_repeat('★', (int)$review['rating']) ?><?= str_repeat('☆', 5 - (int)$review['rating']) ?></div>
+                    <p class="mb-2"><?= nl2br(htmlspecialchars($review['content'])) ?></p>
+                    <?php if (!empty($review['admin_response'])): ?>
+                        <div class="bg-light rounded-3 p-3"><strong>Phản hồi từ cửa hàng</strong><p class="mb-0 mt-1"><?= nl2br(htmlspecialchars($review['admin_response'])) ?></p></div>
+                    <?php endif; ?>
+                </article>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p class="text-secondary">Sản phẩm chưa có đánh giá được duyệt.</p>
+        <?php endif; ?>
+
+        <?php if (!auth()): ?>
+            <p class="mb-0"><a href="<?= route_url('login') ?>">Đăng nhập</a> để gửi đánh giá.</p>
+        <?php elseif ($userReview): ?>
+            <div class="alert alert-info mb-0">
+                <?= $userReview['status'] === 'pending' ? 'Đánh giá của bạn đang chờ cửa hàng duyệt.' : 'Bạn đã gửi đánh giá cho sản phẩm này.' ?>
+            </div>
+        <?php else: ?>
+            <form action="<?= route_url('review-submit') ?>" method="POST" class="mt-4">
+                <input type="hidden" name="product_id" value="<?= (int)$product['id'] ?>">
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="reviewRating">Số sao</label>
+                    <select class="form-select" id="reviewRating" name="rating" required style="max-width:180px">
+                        <option value="5">5 sao</option><option value="4">4 sao</option><option value="3">3 sao</option><option value="2">2 sao</option><option value="1">1 sao</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="reviewContent">Đánh giá của bạn</label>
+                    <textarea class="form-control" id="reviewContent" name="content" rows="4" maxlength="3000" required></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Gửi đánh giá</button>
+                <small class="text-secondary ms-2">Đánh giá sẽ hiển thị sau khi được duyệt.</small>
+            </form>
+        <?php endif; ?>
+    </section>
+
     <!-- Sản Phẩm Liên Quan -->
     <?php if (!empty($relatedProducts)): ?>
         <div class="my-5">
@@ -143,7 +191,7 @@
                         <div class="product-card h-100 d-flex flex-column">
                             <div class="product-img-box">
                                 <a href="<?= route_url('product-detail', ['id' => $rel['id']]) ?>">
-                                    <img src="<?= htmlspecialchars($rel['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($rel['name']) ?>" loading="lazy">
+                                    <img src="<?= htmlspecialchars(image_src($rel['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($rel['name']) ?>" loading="lazy">
                                 </a>
                                 <?php if (!empty($rel['brand_name'])): ?>
                                     <span class="badge-brand"><?= htmlspecialchars($rel['brand_name']) ?></span>

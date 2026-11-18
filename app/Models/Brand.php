@@ -17,4 +17,40 @@ class Brand extends BaseModel
         $sql = "SELECT * FROM brands WHERE id = :id";
         return $this->fetch($sql, ['id' => $id]);
     }
+
+    public function getAll(): array
+    {
+        return $this->fetchAll(
+            'SELECT b.*, COUNT(p.id) AS product_count
+             FROM brands b LEFT JOIN products p ON p.brand_id = b.id
+             GROUP BY b.id, b.name, b.slug, b.status
+             ORDER BY b.name ASC'
+        );
+    }
+
+    public function create(array $data): int
+    {
+        return $this->insert('brands', $data);
+    }
+
+    public function updateBrand(int $id, array $data): bool
+    {
+        return $this->update('brands', $data, 'id = :id', ['id' => $id]);
+    }
+
+    public function deleteBrand(int $id): bool
+    {
+        return $this->delete('brands', 'id = :id', ['id' => $id]);
+    }
+
+    public function nameExists(string $name, ?int $exceptId = null): bool
+    {
+        $sql = 'SELECT COUNT(*) FROM brands WHERE name = :name';
+        $params = ['name' => $name];
+        if ($exceptId !== null) {
+            $sql .= ' AND id != :id';
+            $params['id'] = $exceptId;
+        }
+        return (int)$this->fetchColumn($sql, $params) > 0;
+    }
 }

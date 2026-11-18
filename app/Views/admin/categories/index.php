@@ -1,63 +1,48 @@
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="fw-bold mb-1">Quản Lý Danh Mục Giày</h4>
-            <p class="text-secondary small mb-0">Phân loại sản phẩm (Sneaker, Giày Chạy Bộ, Giày Bóng Rổ,...)</p>
-        </div>
-    </div>
-
     <div class="row g-4">
-        <!-- Form Thêm Danh Mục -->
         <div class="col-lg-4">
             <div class="bg-white p-4 rounded-4 border shadow-sm">
-                <h5 class="fw-bold mb-3 border-bottom pb-2">Thêm Danh Mục Mới</h5>
+                <h5 class="fw-bold mb-3">Thêm danh mục</h5>
                 <form action="<?= route_url('admin-category-store') ?>" method="POST">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Tên Danh Mục <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" placeholder="Ví dụ: Giày Đi Bộ (Walking)" required>
+                        <label class="form-label fw-bold" for="categoryName">Tên danh mục *</label>
+                        <input id="categoryName" type="text" name="name" class="form-control" maxlength="120" required placeholder="Nam, Nữ, Sneaker...">
                     </div>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold w-100">
-                        <i class="fa-solid fa-plus me-1"></i> Tạo Danh Mục
-                    </button>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" for="categoryParent">Danh mục cha</label>
+                        <select id="categoryParent" name="parent_id" class="form-select">
+                            <option value="">-- Danh mục gốc --</option>
+                            <?php foreach ($parentCategories as $parent): ?>
+                                <option value="<?= (int)$parent['id'] ?>"><?= str_repeat('&nbsp;&nbsp;', (int)$parent['depth']) ?><?= htmlspecialchars($parent['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-plus me-1"></i>Tạo danh mục</button>
                 </form>
             </div>
         </div>
-
-        <!-- Bảng Danh Sách Danh Mục -->
         <div class="col-lg-8">
             <div class="bg-white p-4 rounded-4 border shadow-sm">
-                <h5 class="fw-bold mb-3 border-bottom pb-2">Các Danh Mục Hiện Có</h5>
+                <h5 class="fw-bold mb-3">Cây danh mục</h5>
                 <div class="table-responsive">
                     <table class="table align-middle table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#ID</th>
-                                <th>Tên Danh Mục</th>
-                                <th>Slug</th>
-                                <th>Số Sản Phẩm</th>
-                                <th class="text-end">Thao Tác</th>
-                            </tr>
-                        </thead>
+                        <thead class="table-light"><tr><th>Tên</th><th>Slug</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
                         <tbody>
-                            <?php if (!empty($categories)): ?>
-                                <?php foreach ($categories as $cat): ?>
-                                    <tr>
-                                        <td>#<?= $cat['id'] ?></td>
-                                        <td class="fw-bold text-dark"><?= htmlspecialchars($cat['name']) ?></td>
-                                        <td><code><?= htmlspecialchars($cat['slug']) ?></code></td>
-                                        <td>
-                                            <span class="badge bg-secondary"><?= $cat['total_products'] ?? 0 ?> giày</span>
-                                        </td>
-                                        <td class="text-end">
-                                            <a href="<?= route_url('admin-category-delete', ['id' => $cat['id']]) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr><td colspan="5" class="text-center py-4 text-secondary">Chưa có danh mục nào.</td></tr>
-                            <?php endif; ?>
+                        <?php foreach ($categories as $category): ?>
+                            <tr>
+                                <td class="fw-semibold"><?= str_repeat('&mdash; ', (int)($category['depth'] ?? 0)) ?><?= htmlspecialchars($category['name']) ?></td>
+                                <td><code><?= htmlspecialchars($category['slug']) ?></code></td>
+                                <td><span class="badge <?= $category['status'] === 'active' ? 'bg-success' : 'bg-secondary' ?>"><?= $category['status'] === 'active' ? 'Hiển thị' : 'Tạm ẩn' ?></span></td>
+                                <td class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-primary" href="<?= route_url('admin-category-edit', ['id' => $category['id']]) ?>"><i class="fa-solid fa-pen"></i></a>
+                                    <form class="d-inline" method="POST" action="<?= route_url('admin-category-delete') ?>" onsubmit="return confirm('Xóa danh mục này? Sản phẩm sẽ bị bỏ phân loại.')">
+                                        <input type="hidden" name="id" value="<?= (int)$category['id'] ?>">
+                                        <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (!$categories): ?><tr><td colspan="4" class="text-center text-secondary">Chưa có danh mục.</td></tr><?php endif; ?>
                         </tbody>
                     </table>
                 </div>

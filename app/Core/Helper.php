@@ -45,6 +45,13 @@ if (!function_exists('asset')) {
     }
 }
 
+if (!function_exists('image_src')) {
+    function image_src(string $path): string
+    {
+        return preg_match('/\Ahttps?:\/\//i', $path) ? $path : base_url($path);
+    }
+}
+
 if (!function_exists('format_price')) {
     function format_price($price): string
     {

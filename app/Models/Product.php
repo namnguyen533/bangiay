@@ -15,8 +15,7 @@ class Product extends BaseModel
         $params = [];
 
         if (!empty($filters['category_id'])) {
-            $where[] = "pc.category_id = :category_id";
-            $params['category_id'] = $filters['category_id'];
+            $this->appendCategoryFilter($where, $params, (int)$filters['category_id']);
         }
 
         if (!empty($filters['brand_id'])) {
@@ -76,8 +75,7 @@ class Product extends BaseModel
         $params = [];
 
         if (!empty($filters['category_id'])) {
-            $where[] = "pc.category_id = :category_id";
-            $params['category_id'] = $filters['category_id'];
+            $this->appendCategoryFilter($where, $params, (int)$filters['category_id']);
         }
 
         if (!empty($filters['brand_id'])) {
@@ -106,17 +104,17 @@ class Product extends BaseModel
      */
     public function getDetail(int $id): ?array
     {
-        $sql = "SELECT 
-                    p.*,
-                    b.name AS brand_name,
-                    c.id AS category_id,
-                    c.name AS category_name,
-                    pi.image_url
+        $sql = "SELECT p.*, b.name AS brand_name,
+                    (SELECT c.id FROM product_categories pc
+                     JOIN categories c ON c.id = pc.category_id
+                     WHERE pc.product_id = p.id ORDER BY c.name LIMIT 1) AS category_id,
+                    (SELECT c.name FROM product_categories pc
+                     JOIN categories c ON c.id = pc.category_id
+                     WHERE pc.product_id = p.id ORDER BY c.name LIMIT 1) AS category_name,
+                    (SELECT pi.image_url FROM product_images pi
+                     WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_url
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
-                LEFT JOIN product_categories pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.id = :id";
 
         $product = $this->fetch($sql, ['id' => $id]);
@@ -169,20 +167,18 @@ class Product extends BaseModel
     {
         $sql = "SELECT 
                     p.id, p.brand_id, p.name, p.slug, p.description, p.status, p.created_at, p.updated_at,
-                    MAX(b.name) AS brand_name,
-                    MAX(c.name) AS category_name,
-                    MAX(pi.image_url) AS image_url,
-                    MIN(pv.price) AS min_price,
-                    MAX(pv.price) AS max_price,
-                    SUM(pv.stock_quantity) AS total_stock,
-                    COUNT(pv.id) AS variant_count
+                    b.name AS brand_name,
+                    (SELECT GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ')
+                     FROM product_categories pc JOIN categories c ON c.id = pc.category_id
+                     WHERE pc.product_id = p.id) AS category_name,
+                    (SELECT pi.image_url FROM product_images pi
+                     WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_url,
+                    COALESCE((SELECT MIN(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active'), 0) AS min_price,
+                    COALESCE((SELECT MAX(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active'), 0) AS max_price,
+                    COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active'), 0) AS total_stock,
+                    (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active') AS variant_count
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
-                LEFT JOIN product_categories pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
-                LEFT JOIN product_variants pv ON p.id = pv.product_id
-                GROUP BY p.id, p.brand_id, p.name, p.slug, p.description, p.status, p.created_at, p.updated_at
                 ORDER BY p.id DESC";
 
         return $this->fetchAll($sql);
@@ -212,12 +208,60 @@ class Product extends BaseModel
         return $productId;
     }
 
+    public function addImages(int $productId, array $imagePaths): void
+    {
+        foreach ($imagePaths as $path) {
+            $this->insert('product_images', [
+                'product_id' => $productId,
+                'image_url' => $path,
+                'alt_text' => null,
+                'sort_order' => 0,
+                'is_primary' => 0,
+            ]);
+        }
+
+        if ($imagePaths) {
+            $this->query(
+                'UPDATE product_images SET is_primary = 0 WHERE product_id = :product_id',
+                ['product_id' => $productId]
+            );
+            $this->query(
+                'UPDATE product_images SET is_primary = 1
+                 WHERE product_id = :product_id ORDER BY id DESC LIMIT 1',
+                ['product_id' => $productId]
+            );
+        }
+    }
+
+    public function removeImage(int $productId, int $imageId): ?string
+    {
+        $image = $this->fetch(
+            'SELECT image_url FROM product_images WHERE id = :id AND product_id = :product_id',
+            ['id' => $imageId, 'product_id' => $productId]
+        );
+        if (!$image) {
+            return null;
+        }
+
+        $this->delete('product_images', 'id = :id AND product_id = :product_id', [
+            'id' => $imageId,
+            'product_id' => $productId,
+        ]);
+        $this->query(
+            'UPDATE product_images SET is_primary = 1
+             WHERE product_id = :product_id ORDER BY sort_order, id LIMIT 1',
+            ['product_id' => $productId]
+        );
+
+        return $image['image_url'];
+    }
+
     public function updateProduct(int $id, array $data, ?int $categoryId = null, ?string $imageUrl = null): bool
     {
         $this->update('products', $data, 'id = :id', ['id' => $id]);
 
+        $this->delete('product_categories', 'product_id = :id', ['id' => $id]);
         if ($categoryId !== null) {
-            $this->delete('product_categories', 'product_id = :id', ['id' => $id]);
             $this->insert('product_categories', [
                 'product_id' => $id,
                 'category_id' => $categoryId
@@ -240,9 +284,21 @@ class Product extends BaseModel
 
     public function deleteProduct(int $id): bool
     {
-        $this->delete('product_categories', 'product_id = :id', ['id' => $id]);
-        $this->delete('product_images', 'product_id = :id', ['id' => $id]);
-        $this->delete('product_variants', 'product_id = :id', ['id' => $id]);
-        return $this->delete('products', 'id = :id', ['id' => $id]);
+        $this->update('product_variants', ['status' => 'inactive'], 'product_id = :id', ['id' => $id]);
+        return $this->update('products', ['status' => 'inactive'], 'id = :id', ['id' => $id]);
+    }
+
+    private function appendCategoryFilter(array &$where, array &$params, int $categoryId): void
+    {
+        $categoryIds = (new Category())->getDescendantIds($categoryId, true);
+        $placeholders = [];
+        foreach ($categoryIds as $index => $id) {
+            $key = 'category_' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $id;
+        }
+        if ($placeholders) {
+            $where[] = 'pc.category_id IN (' . implode(', ', $placeholders) . ')';
+        }
     }
 }
