@@ -307,6 +307,29 @@ $currentUser = auth();
             color: var(--primary-hover);
             text-decoration: underline;
         }
+        .auth-admin-entry {
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #e8edf4;
+            text-align: center;
+        }
+        .auth-admin-entry-label {
+            margin-bottom: 0.65rem;
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+        .auth-admin-entry .btn {
+            min-height: 46px;
+            border-color: #d7dee8;
+            border-radius: 12px;
+            color: #334155;
+            font-size: 0.86rem;
+        }
+        .auth-admin-entry .btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #fff7f8;
+        }
         footer {
             margin-top: auto;
             background-color: #0f172a;
