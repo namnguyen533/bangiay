@@ -97,7 +97,10 @@ Khác với các mặt hàng thông thường (như sách hay điện thoại), 
 
 ## 4. Hướng Dẫn Cài Đặt & Chạy Website
 
-### Cách 1: Chạy trực tiếp qua Laragon (Khuyên dùng)
+### Cách 1: Chạy nhanh trên Windows
+Nhấp đúp vào file `chay_web.bat` trong thư mục dự án. Trình duyệt sẽ tự mở website tại `http://127.0.0.1:8000/`. Giữ cửa sổ màu đen đang mở khi sử dụng website; đóng cửa sổ đó sẽ dừng website.
+
+### Cách 2: Chạy trực tiếp qua Laragon (Khuyên dùng)
 1. Bật **Laragon** (Start All: Apache & MySQL).
 2. Đảm bảo database `bangiay2` đã có các bảng nền của ứng dụng (`users`, `products`, `product_variants`, `categories`, `brands` và các bảng đơn hàng).
 3. Import file `database/feature_migration.sql` vào database `bangiay2` một lần để tạo bảng phiếu nhập kho và đánh giá. File migration không xóa hoặc sửa dữ liệu hiện có.
@@ -106,7 +109,7 @@ Khác với các mặt hàng thông thường (như sách hay điện thoại), 
    - Trang người dùng: `http://localhost/webbangiay/bangiay/`
    - Hoặc dùng URL trực tiếp: `http://localhost/webbangiay/bangiay/index.php`
 
-### Cách 2: Chạy bằng PHP Built-in Server
+### Cách 3: Chạy bằng PHP Built-in Server
 Mở **Laragon Terminal** tại thư mục dự án `C:\laragon\www\webbangiay\bangiay` rồi chạy:
 ```powershell
 php -S localhost:8000

@@ -53,6 +53,13 @@
                 </form>
 
                 <p class="auth-switch">Đã có tài khoản? <a href="<?= route_url('login') ?>">Đăng nhập</a></p>
+
+                <div class="auth-admin-entry">
+                    <p class="auth-admin-entry-label">Dành cho quản trị viên</p>
+                    <a href="<?= route_url('admin') ?>" class="btn btn-outline-dark w-100 fw-semibold">
+                        <i class="fa-solid fa-gauge-high me-2"></i>Vào trang quản trị
+                    </a>
+                </div>
             </div>
         </section>
     </div>
