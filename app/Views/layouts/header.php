@@ -381,9 +381,27 @@ $currentUser = auth();
                     <li class="nav-item">
                         <a class="nav-link px-3" href="<?= route_url('products') ?>">Tất Cả Giày</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="<?= route_url('track-order') ?>">
+                            <i class="fa-solid fa-truck-fast me-1 text-danger"></i> Tra Cứu Đơn
+                        </a>
+                    </li>
+
+                    <!-- Wishlist button -->
+                    <?php $wishCount = wishlist_count(); ?>
+                    <li class="nav-item ms-lg-1">
+                        <a href="<?= route_url('wishlist') ?>" class="btn btn-outline-danger position-relative rounded-pill px-3 py-2" title="Sản phẩm yêu thích">
+                            <i class="fa-solid fa-heart me-1"></i> Yêu Thích
+                            <?php if ($wishCount > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill">
+                                    <?= $wishCount ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
 
                     <!-- Cart button -->
-                    <li class="nav-item ms-lg-2">
+                    <li class="nav-item ms-lg-1">
                         <a href="<?= route_url('cart') ?>" class="btn btn-outline-dark position-relative rounded-pill px-3 py-2">
                             <i class="fa-solid fa-cart-shopping me-1"></i> Giỏ Hàng
                             <?php if ($cartCount > 0): ?>
@@ -410,6 +428,17 @@ $currentUser = auth();
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                 <?php endif; ?>
+                                <li>
+                                    <a class="dropdown-item py-2" href="<?= route_url('my-orders') ?>">
+                                        <i class="fa-solid fa-clock-rotate-left me-2 text-danger"></i> Đơn Hàng Của Tôi
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="<?= route_url('wishlist') ?>">
+                                        <i class="fa-solid fa-heart me-2 text-danger"></i> Sản Phẩm Yêu Thích
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item py-2" href="<?= route_url('logout') ?>">
                                         <i class="fa-solid fa-right-from-bracket me-2 text-secondary"></i> Đăng Xuất

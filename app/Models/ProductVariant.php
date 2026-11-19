@@ -45,10 +45,42 @@ class ProductVariant extends BaseModel
                 SET stock_quantity = stock_quantity - :qty 
                 WHERE id = :id AND stock_quantity >= :check_qty";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
+        $stmt->execute([
             'qty' => $quantity,
             'id' => $variantId,
             'check_qty' => $quantity
         ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function increaseStock(int $variantId, int $quantity): bool
+    {
+        $sql = "UPDATE product_variants 
+                SET stock_quantity = stock_quantity + :qty 
+                WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            'qty' => $quantity,
+            'id' => $variantId
+        ]);
+    }
+
+    public function checkStock(int $variantId, int $quantity): bool
+    {
+        $sql = "SELECT stock_quantity FROM product_variants WHERE id = :id AND status = 'active'";
+        $stock = (int)$this->fetchColumn($sql, ['id' => $variantId]);
+        return $stock >= $quantity;
+    }
+
+    /**
+     * Lấy các biến thể cùng sản phẩm với một biến thể cho trước
+     */
+    public function getSiblingVariants(int $variantId): array
+    {
+        $variant = $this->findById($variantId);
+        if (!$variant) {
+            return [];
+        }
+        return $this->getByProductId((int)$variant['product_id']);
     }
 }
