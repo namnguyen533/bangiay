@@ -64,7 +64,7 @@
                     <div class="order-items-list mb-3" style="max-height: 320px; overflow-y: auto;">
                         <?php foreach ($items as $item): ?>
                             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
-                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
+                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['product_name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-0 fw-bold small text-truncate" style="max-width: 220px;"><?= htmlspecialchars($item['product_name']) ?></h6>
                                     <span class="small text-secondary">Size <?= htmlspecialchars($item['size']) ?> | SL: <?= $item['quantity'] ?></span>

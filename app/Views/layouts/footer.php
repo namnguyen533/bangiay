@@ -1,3 +1,4 @@
+    <?php $footerBrands = (new \App\Models\Brand())->getAllActive(); ?>
     <!-- Footer -->
     <footer class="py-5 mt-5">
         <div class="container">
@@ -20,11 +21,9 @@
                 <div class="col-lg-2 col-md-6">
                     <h6 class="text-white fw-bold mb-3">Thương Hiệu</h6>
                     <ul class="list-unstyled small">
-                        <li class="mb-2"><a href="<?= route_url('products', ['brand_id' => 1]) ?>" class="text-decoration-none text-secondary">Nike</a></li>
-                        <li class="mb-2"><a href="<?= route_url('products', ['brand_id' => 2]) ?>" class="text-decoration-none text-secondary">Adidas</a></li>
-                        <li class="mb-2"><a href="<?= route_url('products', ['brand_id' => 3]) ?>" class="text-decoration-none text-secondary">Puma</a></li>
-                        <li class="mb-2"><a href="<?= route_url('products', ['brand_id' => 4]) ?>" class="text-decoration-none text-secondary">Converse</a></li>
-                        <li class="mb-2"><a href="<?= route_url('products', ['brand_id' => 5]) ?>" class="text-decoration-none text-secondary">Vans</a></li>
+                        <?php foreach ($footerBrands as $brand): ?>
+                            <li class="mb-2"><a href="<?= route_url('products', ['brand_id' => $brand['id']]) ?>" class="text-decoration-none text-secondary"><?= htmlspecialchars($brand['name']) ?></a></li>
+                        <?php endforeach; ?>
                     </ul>
                 </div>
 
