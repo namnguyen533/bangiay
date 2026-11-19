@@ -112,3 +112,64 @@ if (!function_exists('is_admin')) {
         return $user && ($user['role'] === 'admin' || (isset($user['roles']) && in_array('admin', $user['roles'])));
     }
 }
+
+if (!function_exists('order_status_label')) {
+    function order_status_label(string $status): string
+    {
+        $labels = [
+            'pending'   => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'processing'=> 'Đang đóng gói',
+            'shipping'  => 'Đang giao hàng',
+            'completed' => 'Đã giao thành công',
+            'cancelled' => 'Đã hủy',
+            'returned'  => 'Trả hàng/Hoàn tiền',
+        ];
+        return $labels[$status] ?? ucfirst($status);
+    }
+}
+
+if (!function_exists('order_status_badge')) {
+    function order_status_badge(string $status): string
+    {
+        $classes = [
+            'pending'   => 'bg-warning text-dark',
+            'confirmed' => 'bg-info text-dark',
+            'processing'=> 'bg-secondary text-white',
+            'shipping'  => 'bg-primary text-white',
+            'completed' => 'bg-success text-white',
+            'cancelled' => 'bg-danger text-white',
+            'returned'  => 'bg-dark text-white',
+        ];
+        return $classes[$status] ?? 'bg-secondary text-white';
+    }
+}
+
+if (!function_exists('payment_method_label')) {
+    function payment_method_label(string $method): string
+    {
+        $methods = [
+            'cod'     => 'Thanh toán khi nhận hàng (COD)',
+            'banking' => 'Chuyển khoản VietQR',
+            'vnpay'   => 'Cổng thanh toán VNPay',
+            'momo'    => 'Ví điện tử MoMo',
+        ];
+        return $methods[$method] ?? strtoupper($method);
+    }
+}
+
+if (!function_exists('wishlist_count')) {
+    function wishlist_count(): int
+    {
+        $user = auth();
+        if (!$user) {
+            return 0;
+        }
+        static $count = null;
+        if ($count === null) {
+            $model = new \App\Models\Wishlist();
+            $count = $model->countByUserId((int)$user['id']);
+        }
+        return $count;
+    }
+}

@@ -7,12 +7,16 @@ use App\Controllers\ProductController;
 use App\Controllers\CartController;
 use App\Controllers\CheckoutController;
 use App\Controllers\AuthController;
+use App\Controllers\WishlistController;
+use App\Controllers\OrderController;
 use App\Controllers\ReviewController;
 use App\Controllers\Admin\BrandController as AdminBrandController;
 use App\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Controllers\Admin\ProductController as AdminProductController;
 use App\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Controllers\Admin\OrderController as AdminOrderController;
+use App\Controllers\Admin\VoucherController as AdminVoucherController;
+use App\Controllers\Admin\ReportController as AdminReportController;
 use App\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Controllers\Admin\StockReceiptController as AdminStockReceiptController;
 
@@ -30,16 +34,32 @@ class Router
             'product-detail', 'detail' => (new ProductController())->detail(),
             'review-submit' => (new ReviewController())->submit(),
             
-            // Giỏ hàng
-            'cart'        => (new CartController())->index(),
-            'cart-add'    => (new CartController())->add(),
-            'cart-update' => (new CartController())->update(),
-            'cart-remove' => (new CartController())->remove(),
+            // Sản phẩm yêu thích (Wishlist)
+            'wishlist'        => (new WishlistController())->index(),
+            'wishlist-toggle' => (new WishlistController())->toggle(),
+            'wishlist-remove' => (new WishlistController())->remove(),
 
-            // Thanh toán
+            // Giỏ hàng & Voucher
+            'cart'                => (new CartController())->index(),
+            'cart-add'            => (new CartController())->add(),
+            'cart-update'         => (new CartController())->update(),
+            'cart-change-variant' => (new CartController())->changeVariant(),
+            'cart-remove'         => (new CartController())->remove(),
+            'cart-apply-voucher'  => (new CartController())->applyVoucher(),
+            'cart-remove-voucher' => (new CartController())->removeVoucher(),
+
+            // Đặt hàng & Thanh toán
             'checkout'         => (new CheckoutController())->index(),
             'checkout-process' => (new CheckoutController())->process(),
             'order-success'    => (new CheckoutController())->success(),
+            'payment-gateway'  => (new CheckoutController())->paymentGateway(),
+            'payment-confirm'  => (new CheckoutController())->confirmPayment(),
+
+            // Đơn hàng phía Client (Theo dõi & Lịch sử & Hủy đơn)
+            'my-orders'     => (new OrderController())->myOrders(),
+            'order-detail'  => (new OrderController())->detail(),
+            'track-order'   => (new OrderController())->track(),
+            'order-cancel'  => (new OrderController())->cancel(),
 
             // Tài khoản
             'login'         => (new AuthController())->login(),
@@ -79,6 +99,17 @@ class Router
             'admin-orders'              => (new AdminOrderController())->index(),
             'admin-order-detail'        => (new AdminOrderController())->detail(),
             'admin-order-update-status' => (new AdminOrderController())->updateStatus(),
+            'admin-order-print'         => (new AdminOrderController())->print(),
+
+            'admin-vouchers'        => (new AdminVoucherController())->index(),
+            'admin-voucher-create'  => (new AdminVoucherController())->create(),
+            'admin-voucher-store'   => (new AdminVoucherController())->store(),
+            'admin-voucher-edit'    => (new AdminVoucherController())->edit(),
+            'admin-voucher-update'  => (new AdminVoucherController())->update(),
+            'admin-voucher-delete'  => (new AdminVoucherController())->delete(),
+
+            'admin-reports'         => (new AdminReportController())->index(),
+            'admin-report-export'   => (new AdminReportController())->export(),
 
             default => (new HomeController())->index(),
         };

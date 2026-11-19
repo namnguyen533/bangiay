@@ -90,7 +90,10 @@
                     <?php foreach ($products as $item): ?>
                         <div class="col-md-4 col-sm-6">
                             <div class="product-card h-100 d-flex flex-column">
-                                <div class="product-img-box">
+                                <div class="product-img-box position-relative">
+                                    <a href="<?= route_url('wishlist-toggle', ['product_id' => $item['id']]) ?>" class="btn btn-sm btn-light rounded-circle shadow-sm position-absolute" style="top: 10px; right: 10px; z-index: 5; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;" title="Thêm vào yêu thích">
+                                        <i class="fa-regular fa-heart text-danger"></i>
+                                    </a>
                                     <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
                                         <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
                                     </a>

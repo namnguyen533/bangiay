@@ -5,17 +5,23 @@ namespace App\Controllers;
 use App\Core\BaseController;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\UserAddress;
+use App\Models\Voucher;
 use Exception;
 
 class CheckoutController extends BaseController
 {
     private Cart $cart;
     private Order $orderModel;
+    private UserAddress $addressModel;
+    private Voucher $voucherModel;
 
     public function __construct()
     {
         $this->cart = new Cart();
         $this->orderModel = new Order();
+        $this->addressModel = new UserAddress();
+        $this->voucherModel = new Voucher();
     }
 
     public function index(): void
@@ -26,19 +32,42 @@ class CheckoutController extends BaseController
             $this->redirect(route_url('products'));
         }
 
+        // Kiểm tra tồn kho trước khi vào trang thanh toán
+        $stockErrors = $this->cart->validateInventory();
+        if (!empty($stockErrors)) {
+            set_flash('error', implode('<br>', $stockErrors), 'danger');
+            $this->redirect(route_url('cart'));
+        }
+
         $subtotal = $this->cart->getTotalAmount();
-        $shippingFee = ($subtotal >= 2000000 || $subtotal == 0) ? 0 : 30000;
-        $totalAmount = $subtotal + $shippingFee;
+        $shippingFee = $this->cart->getShippingFee();
+        $appliedVoucher = $this->cart->getVoucher();
+        $discountAmount = $this->cart->getDiscountAmount();
+        $finalTotal = $this->cart->getFinalTotal();
 
         $user = auth();
+        $savedAddresses = [];
+        $defaultAddress = null;
+
+        if ($user) {
+            $savedAddresses = $this->addressModel->getByUserId((int)$user['id']);
+            $defaultAddress = $this->addressModel->getDefault((int)$user['id']);
+        }
+
+        $availableVouchers = $this->voucherModel->getActiveVouchers();
 
         $this->view('checkout', [
-            'pageTitle'   => 'Thanh Toán Đơn Hàng - SoleVibe',
-            'items'       => $items,
-            'subtotal'    => $subtotal,
-            'shippingFee' => $shippingFee,
-            'totalAmount' => $totalAmount,
-            'user'        => $user,
+            'pageTitle'         => 'Thanh Toán Đơn Hàng - SoleVibe',
+            'items'             => $items,
+            'subtotal'          => $subtotal,
+            'shippingFee'       => $shippingFee,
+            'appliedVoucher'    => $appliedVoucher,
+            'discountAmount'    => $discountAmount,
+            'finalTotal'        => $finalTotal,
+            'user'              => $user,
+            'savedAddresses'    => $savedAddresses,
+            'defaultAddress'    => $defaultAddress,
+            'availableVouchers' => $availableVouchers,
         ]);
     }
 
@@ -49,38 +78,92 @@ class CheckoutController extends BaseController
             $this->redirect(route_url('products'));
         }
 
-        $recipientName = trim($_POST['recipient_name'] ?? '');
-        $recipientPhone = trim($_POST['recipient_phone'] ?? '');
-        $shippingAddress = trim($_POST['shipping_address'] ?? '');
-        $paymentMethod = $_POST['payment_method'] ?? 'cod';
-        $note = trim($_POST['note'] ?? '');
-
-        if (empty($recipientName) || empty($recipientPhone) || empty($shippingAddress)) {
-            set_flash('error', 'Vui lòng điền đầy đủ họ tên, số điện thoại và địa chỉ giao hàng!', 'danger');
-            $this->redirect(route_url('checkout'));
+        // 1. Kiểm tra tồn kho lần cuối
+        $stockErrors = $this->cart->validateInventory();
+        if (!empty($stockErrors)) {
+            set_flash('error', implode('<br>', $stockErrors), 'danger');
+            $this->redirect(route_url('cart'));
         }
-
-        $subtotal = $this->cart->getTotalAmount();
-        $shippingFee = ($subtotal >= 2000000) ? 0 : 30000;
-        $totalAmount = $subtotal + $shippingFee;
 
         $user = auth();
         $userId = $user['id'] ?? null;
+
+        $recipientName = '';
+        $recipientPhone = '';
+        $shippingAddress = '';
+
+        $addressChoice = $_POST['address_choice'] ?? 'new';
+        $selectedAddressId = (int)($_POST['selected_address_id'] ?? 0);
+
+        if ($user && $addressChoice === 'saved' && $selectedAddressId > 0) {
+            $addr = $this->addressModel->findById($selectedAddressId, (int)$userId);
+            if ($addr) {
+                $recipientName = $addr['recipient_name'];
+                $recipientPhone = $addr['phone'];
+                $shippingAddress = "{$addr['address_line']}, {$addr['ward']}, {$addr['district']}, {$addr['province']}";
+            }
+        }
+
+        if (empty($recipientName)) {
+            $recipientName = trim($_POST['recipient_name'] ?? '');
+            $recipientPhone = trim($_POST['recipient_phone'] ?? '');
+            
+            $province = trim($_POST['province'] ?? '');
+            $district = trim($_POST['district'] ?? '');
+            $ward = trim($_POST['ward'] ?? '');
+            $addressLine = trim($_POST['address_line'] ?? '');
+
+            if (!empty($province) && !empty($district) && !empty($addressLine)) {
+                $shippingAddress = "{$addressLine}, {$ward}, {$district}, {$province}";
+            } else {
+                $shippingAddress = trim($_POST['shipping_address'] ?? '');
+            }
+
+            // Lưu địa chỉ mới nếu người dùng tick chọn
+            if ($user && !empty($_POST['save_address']) && !empty($province) && !empty($district) && !empty($addressLine)) {
+                $this->addressModel->createAddress([
+                    'user_id'        => $userId,
+                    'recipient_name' => $recipientName,
+                    'phone'          => $recipientPhone,
+                    'province'       => $province,
+                    'district'       => $district,
+                    'ward'           => $ward,
+                    'address_line'   => $addressLine,
+                    'is_default'     => !empty($_POST['is_default_address']) ? 1 : 0,
+                ]);
+            }
+        }
+
+        if (empty($recipientName) || empty($recipientPhone) || empty($shippingAddress)) {
+            set_flash('error', 'Vui lòng cung cấp đầy đủ họ tên, số điện thoại và địa chỉ giao hàng!', 'danger');
+            $this->redirect(route_url('checkout'));
+        }
+
+        $paymentMethod = $_POST['payment_method'] ?? 'cod';
+        $note = trim($_POST['note'] ?? '');
+
+        // Tính tổng tiền & giảm giá
+        $subtotal = $this->cart->getTotalAmount();
+        $shippingFee = $this->cart->getShippingFee();
+        $appliedVoucher = $this->cart->getVoucher();
+        $discountAmount = $this->cart->getDiscountAmount();
+        $totalAmount = $this->cart->getFinalTotal();
 
         $orderCode = 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
 
         $orderData = [
             'order_code'       => $orderCode,
             'user_id'          => $userId,
+            'voucher_id'       => $appliedVoucher['id'] ?? null,
             'recipient_name'   => $recipientName,
             'recipient_phone'  => $recipientPhone,
             'shipping_address' => $shippingAddress,
             'subtotal'         => $subtotal,
-            'discount_amount'  => 0,
+            'discount_amount'  => $discountAmount,
             'shipping_fee'     => $shippingFee,
             'total_amount'     => $totalAmount,
             'payment_method'   => $paymentMethod,
-            'payment_status'   => ($paymentMethod === 'banking') ? 'pending' : 'unpaid',
+            'payment_status'   => ($paymentMethod === 'cod') ? 'unpaid' : 'pending',
             'order_status'     => 'pending',
             'note'             => $note,
         ];
@@ -88,6 +171,11 @@ class CheckoutController extends BaseController
         try {
             $orderId = $this->orderModel->createOrder($orderData, $items);
             $this->cart->clear();
+
+            // Nếu thanh toán online (VNPay / MoMo / Banking QR) -> chuyển sang trang cổng thanh toán
+            if (in_array($paymentMethod, ['vnpay', 'momo', 'banking'])) {
+                $this->redirect(route_url('payment-gateway', ['id' => $orderId]));
+            }
 
             set_flash('order_success', $orderCode);
             $this->redirect(route_url('order-success', ['id' => $orderId]));
@@ -97,10 +185,47 @@ class CheckoutController extends BaseController
         }
     }
 
+    /**
+     * Màn hình cổng thanh toán Online (VNPay / MoMo / VietQR)
+     */
+    public function paymentGateway(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $order = $this->orderModel->getDetail($id);
+
+        if (!$order) {
+            set_flash('error', 'Không tìm thấy đơn hàng!', 'danger');
+            $this->redirect(route_url());
+        }
+
+        $this->view('payment_gateway', [
+            'pageTitle' => 'Thanh Toán Đơn Hàng #' . $order['order_code'],
+            'order'     => $order,
+        ]);
+    }
+
+    /**
+     * Xác nhận thanh toán thành công (Mô phỏng IPN / Callback từ Cổng thanh toán)
+     */
+    public function confirmPayment(): void
+    {
+        $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+        $order = $this->orderModel->getDetail($id);
+
+        if ($order) {
+            $this->orderModel->updatePaymentStatus($id, 'paid');
+            set_flash('order_success', $order['order_code']);
+            set_flash('success', 'Thanh toán online thành công! Đơn hàng của bạn đã được xác nhận.', 'success');
+            $this->redirect(route_url('order-success', ['id' => $id]));
+        }
+
+        $this->redirect(route_url());
+    }
+
     public function success(): void
     {
-        $orderId = (int)($_GET['id'] ?? 0);
-        $order = $this->orderModel->getDetail($orderId);
+        $id = (int)($_GET['id'] ?? 0);
+        $order = $this->orderModel->getDetail($id);
 
         if (!$order) {
             $this->redirect(route_url());
