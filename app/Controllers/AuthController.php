@@ -20,6 +20,10 @@ class AuthController extends BaseController
             $this->redirect(is_admin() ? route_url('admin') : route_url());
         }
 
+        if (($_GET['return'] ?? '') === 'checkout') {
+            $_SESSION['login_return_url'] = route_url('checkout');
+        }
+
         $this->view('login', [
             'pageTitle' => 'Đăng Nhập Tài Khoản - SoleVibe',
         ]);
@@ -55,9 +59,16 @@ class AuthController extends BaseController
 
         if ($user['is_admin']) {
             $this->redirect(route_url('admin'));
-        } else {
-            $this->redirect(route_url());
         }
+
+        $returnUrl = $_SESSION['login_return_url'] ?? null;
+        unset($_SESSION['login_return_url']);
+
+        if (is_string($returnUrl) && str_starts_with($returnUrl, base_url())) {
+            $this->redirect($returnUrl);
+        }
+
+        $this->redirect(route_url());
     }
 
     public function register(): void

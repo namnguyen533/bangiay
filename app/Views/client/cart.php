@@ -95,9 +95,18 @@
                         </span>
                     </div>
 
-                    <a href="<?= route_url('checkout') ?>" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold">
-                        Tiến Hành Thanh Toán <i class="fa-solid fa-arrow-right ms-2"></i>
-                    </a>
+                    <?php if (auth()): ?>
+                        <a href="<?= route_url('checkout') ?>" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold">
+                            Tiến Hành Thanh Toán <i class="fa-solid fa-arrow-right ms-2"></i>
+                        </a>
+                    <?php else: ?>
+                        <a href="<?= route_url('login', ['return' => 'checkout']) ?>" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold">
+                            <i class="fa-solid fa-user me-2"></i> Đăng Nhập Để Đặt Hàng
+                        </a>
+                        <p class="text-center small text-secondary mt-2 mb-0">
+                            Bạn vẫn có thể thêm giày vào giỏ hàng khi chưa đăng nhập.
+                        </p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
