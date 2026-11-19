@@ -115,7 +115,7 @@
                 <!-- Cam Kết Khách Hàng -->
                 <div class="border-top pt-4">
                     <div class="row g-2 text-secondary small">
-                        <div class="col-6"><i class="fa-solid fa-truck text-danger me-2"></i> Miễn phí giao hàng từ 2.000.000đ</div>
+                        <div class="col-6"><i class="fa-solid fa-truck text-danger me-2"></i> Phí ship 30.000đ, miễn phí từ 2.000.000đ</div>
                         <div class="col-6"><i class="fa-solid fa-shield text-danger me-2"></i> Bảo hành chính hãng 12 tháng</div>
                         <div class="col-6"><i class="fa-solid fa-rotate-left text-danger me-2"></i> Đổi size miễn phí trong 30 ngày</div>
                         <div class="col-6"><i class="fa-solid fa-box-check text-danger me-2"></i> Kiểm tra hàng trước khi thanh toán</div>

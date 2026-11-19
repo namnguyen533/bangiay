@@ -37,7 +37,8 @@
         <div class="col-md-3 col-6">
             <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
                 <i class="fa-solid fa-truck-fast fs-1 text-danger mb-3"></i>
-                <h6 class="fw-bold mb-1">Freeship Đơn > 2 Triệu</h6>
+                <h6 class="fw-bold mb-1">Phí ship 30.000đ</h6>
+                <p class="mb-0 small text-secondary">Miễn phí vận chuyển từ 2.000.000đ</p>
                 <p class="small text-secondary mb-0">Giao hàng hỏa tốc trong 2 giờ</p>
             </div>
         </div>

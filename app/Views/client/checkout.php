@@ -85,6 +85,7 @@
                             <?= ($shippingFee == 0) ? 'Miễn phí' : format_price($shippingFee) ?>
                         </span>
                     </div>
+                    <p class="small text-secondary mb-3">Đơn hàng dưới 2.000.000đ áp dụng phí giao hàng 30.000đ; đơn từ 2.000.000đ được miễn phí vận chuyển.</p>
 
                     <hr>
 
