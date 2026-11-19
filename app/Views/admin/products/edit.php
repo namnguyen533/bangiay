@@ -71,6 +71,21 @@
                 <div class="form-text">Để trống hoặc bỏ ảnh phụ thì ảnh đó sẽ bị xóa khỏi thư viện chi tiết.</div>
             </div>
 
+            <div class="row g-3 mb-4">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Màu Giày</label>
+                    <?php
+                    $productColors = array_values(array_unique(array_column($product['variants'], 'color')));
+                    ?>
+                    <input type="text" name="colors" class="form-control" value="<?= htmlspecialchars(implode(', ', $productColors)) ?>" placeholder="Trắng, Đen, Đỏ">
+                    <div class="form-text">Nhập màu mới cùng các màu đang có, phân cách bằng dấu phẩy. Màu hiện có được giữ nguyên.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Tồn Kho Mỗi Size Cho Màu Mới</label>
+                    <input type="number" name="new_color_stock" class="form-control" value="15" min="0">
+                </div>
+            </div>
+
             <div class="mb-4">
                 <label class="form-label fw-bold">Mô Tả Sản Phẩm</label>
                 <textarea name="description" class="form-control" rows="5"><?= htmlspecialchars($product['description'] ?? '') ?></textarea>

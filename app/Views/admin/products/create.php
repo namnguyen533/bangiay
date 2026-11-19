@@ -66,8 +66,9 @@
 
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Phối Màu</label>
-                    <input type="text" name="color" class="form-control" value="Trắng / Đen" placeholder="Ví dụ: Trắng tinh khiết">
+                    <label class="form-label fw-bold">Các Màu Giày</label>
+                    <input type="text" name="colors" class="form-control" value="Trắng / Đen" placeholder="Trắng / Đen, Đỏ, Xanh">
+                    <div class="form-text">Nhập các màu cách nhau bằng dấu phẩy. Tạo một biến thể cho từng màu và size.</div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Các Kích Thước Tạo Mặc Định</label>

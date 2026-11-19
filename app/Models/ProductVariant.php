@@ -39,6 +39,40 @@ class ProductVariant extends BaseModel
         return $this->delete('product_variants', 'product_id = :product_id', ['product_id' => $productId]);
     }
 
+    public function addMissingColors(int $productId, array $colors, int $stockQuantity): void
+    {
+        $variants = $this->fetchAll(
+            "SELECT * FROM product_variants WHERE product_id = :product_id AND status = 'active' ORDER BY size ASC",
+            ['product_id' => $productId]
+        );
+        $existing = [];
+        $variantsBySize = [];
+
+        foreach ($variants as $variant) {
+            $existing[$variant['color']][$variant['size']] = true;
+            $variantsBySize[$variant['size']] = $variantsBySize[$variant['size']] ?? $variant;
+        }
+
+        foreach ($colors as $color) {
+            foreach ($variantsBySize as $size => $template) {
+                if (isset($existing[$color][$size])) {
+                    continue;
+                }
+
+                $this->create([
+                    'product_id'     => $productId,
+                    'sku'            => strtoupper(substr((string)$productId, 0, 4)) . '-' . $size . '-' . strtoupper(substr(md5($color), 0, 6)) . '-' . random_int(100, 999),
+                    'size'           => $size,
+                    'color'          => $color,
+                    'price'          => $template['price'],
+                    'sale_price'     => $template['sale_price'],
+                    'stock_quantity' => $stockQuantity,
+                    'status'         => 'active',
+                ]);
+            }
+        }
+    }
+
     public function decreaseStock(int $variantId, int $quantity): bool
     {
         $sql = "UPDATE product_variants 

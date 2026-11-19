@@ -57,7 +57,10 @@ class ProductController extends BaseController
         $salePrice = !empty($_POST['sale_price']) ? (float)$_POST['sale_price'] : null;
         $stock = max(0, (int)($_POST['stock_quantity'] ?? 10));
         $sizes = $_POST['sizes'] ?? ['39', '40', '41', '42'];
-        $color = trim($_POST['color'] ?? 'Tiêu chuẩn');
+        $colors = $this->parseColors($_POST['colors'] ?? '');
+        if (empty($colors)) {
+            $colors = [trim($_POST['color'] ?? 'Tiêu chuẩn') ?: 'Tiêu chuẩn'];
+        }
 
         if (empty($name) || $price <= 0) {
             set_flash('error', 'Tên sản phẩm và giá tiền không được để trống!', 'danger');
@@ -77,19 +80,20 @@ class ProductController extends BaseController
             $imageUrls
         ));
 
-        // Tạo các biến thể kích thước giày
-        foreach ($sizes as $size) {
-            $sku = strtoupper(substr($slug, 0, 4)) . '-' . $size . '-' . rand(100, 999);
-            $this->variantModel->create([
-                'product_id'     => $productId,
-                'sku'            => $sku,
-                'size'           => $size,
-                'color'          => $color,
-                'price'          => $price,
-                'sale_price'     => $salePrice,
-                'stock_quantity' => $stock,
-                'status'         => 'active',
-            ]);
+        foreach ($colors as $colorIndex => $color) {
+            foreach ($sizes as $size) {
+                $sku = strtoupper(substr($slug, 0, 4)) . '-' . $size . '-' . ($colorIndex + 1) . '-' . rand(100, 999);
+                $this->variantModel->create([
+                    'product_id'     => $productId,
+                    'sku'            => $sku,
+                    'size'           => $size,
+                    'color'          => $color,
+                    'price'          => $price,
+                    'sale_price'     => $salePrice,
+                    'stock_quantity' => $stock,
+                    'status'         => 'active',
+                ]);
+            }
         }
 
         set_flash('success', 'Đã thêm sản phẩm giày mới thành công!', 'success');
@@ -126,6 +130,8 @@ class ProductController extends BaseController
         $description = trim($_POST['description'] ?? '');
         $imageUrl = trim($_POST['image_url'] ?? '');
         $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '');
+        $colors = $this->parseColors($_POST['colors'] ?? '');
+        $newColorStock = max(0, (int)($_POST['new_color_stock'] ?? 0));
         $status = $_POST['status'] ?? 'active';
 
         if (empty($name)) {
@@ -142,6 +148,10 @@ class ProductController extends BaseController
             $imageUrl ? [$imageUrl] : [],
             $imageUrls
         ));
+
+        if (!empty($colors)) {
+            $this->variantModel->addMissingColors($id, $colors, $newColorStock);
+        }
 
         set_flash('success', 'Đã cập nhật sản phẩm giày thành công!', 'success');
         $this->redirect(route_url('admin-products'));
@@ -170,5 +180,15 @@ class ProductController extends BaseController
         }
 
         return array_values(array_unique($urls));
+    }
+
+    private function parseColors(string $text): array
+    {
+        $colors = preg_split('/[,;\r\n]+/', $text) ?: [];
+        $colors = array_map('trim', $colors);
+
+        return array_values(array_unique(array_filter($colors, static function ($color) {
+            return $color !== '';
+        })));
     }
 }

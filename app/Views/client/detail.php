@@ -38,9 +38,18 @@
 
                 <!-- Giá -->
                 <?php
-                $firstVariant = $product['variants'][0] ?? null;
+                $firstVariant = null;
+                foreach ($product['variants'] as $variant) {
+                    if ((int)$variant['stock_quantity'] > 0) {
+                        $firstVariant = $variant;
+                        break;
+                    }
+                }
+                $firstVariant = $firstVariant ?? ($product['variants'][0] ?? null);
                 $defaultPrice = $firstVariant['price'] ?? 0;
                 $defaultSale = $firstVariant['sale_price'] ?? null;
+                $productColors = array_values(array_unique(array_column($product['variants'], 'color')));
+                $selectedColor = $firstVariant['color'] ?? '';
                 ?>
                 <div class="p-3 bg-light rounded-3 mb-4 d-flex align-items-baseline gap-3">
                     <?php if ($defaultSale && $defaultSale < $defaultPrice): ?>
@@ -65,16 +74,38 @@
                         </label>
 
                         <?php if (!empty($product['variants'])): ?>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold d-block">Chọn Màu Giày</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <?php foreach ($productColors as $colorIndex => $color): ?>
+                                        <?php
+                                        $colorInStock = false;
+                                        foreach ($product['variants'] as $variant) {
+                                            if ($variant['color'] === $color && (int)$variant['stock_quantity'] > 0) {
+                                                $colorInStock = true;
+                                                break;
+                                            }
+                                        }
+                                        ?>
+                                        <div>
+                                            <input type="radio" class="btn-check color-radio" name="product_color" id="color_<?= $colorIndex ?>" value="<?= htmlspecialchars($color) ?>" <?= ($color === $selectedColor) ? 'checked' : '' ?> <?= !$colorInStock ? 'disabled' : '' ?>>
+                                            <label class="btn btn-outline-secondary px-3 py-2 fw-semibold" for="color_<?= $colorIndex ?>">
+                                                <?= htmlspecialchars($color) ?><?= !$colorInStock ? ' (Hết)' : '' ?>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                             <div class="d-flex flex-wrap gap-2">
                                 <?php foreach ($product['variants'] as $idx => $v): ?>
-                                    <div>
+                                    <div class="variant-option <?= ($v['color'] !== $selectedColor) ? 'd-none' : '' ?>" data-color="<?= htmlspecialchars($v['color']) ?>">
                                         <input type="radio" class="btn-check variant-radio" name="variant_id" id="variant_<?= $v['id'] ?>" value="<?= $v['id'] ?>" 
                                             data-price="<?= $v['price'] ?>" 
                                             data-sale="<?= $v['sale_price'] ?? '' ?>" 
                                             data-stock="<?= $v['stock_quantity'] ?>"
                                             data-color="<?= htmlspecialchars($v['color']) ?>"
-                                            <?= ($idx === 0) ? 'checked' : '' ?>
-                                            <?= ($v['stock_quantity'] <= 0) ? 'disabled' : '' ?>>
+                                            <?= ((int)$v['id'] === (int)($firstVariant['id'] ?? 0)) ? 'checked' : '' ?>
+                                            <?= ($v['stock_quantity'] <= 0 || $v['color'] !== $selectedColor) ? 'disabled' : '' ?>>
                                         <label class="btn btn-outline-secondary px-3 py-2 fw-bold" for="variant_<?= $v['id'] ?>">
                                             Size <?= htmlspecialchars($v['size']) ?>
                                             <?php if ($v['stock_quantity'] <= 0): ?>
@@ -85,9 +116,9 @@
                                 <?php endforeach; ?>
                             </div>
                             <div class="mt-2 small text-secondary">
-                                Phối màu: <strong id="variantColor" class="text-dark"><?= htmlspecialchars($firstVariant['color'] ?? 'Tiêu chuẩn') ?></strong>
-                                | Tồn kho: <strong id="variantStock" class="text-success"><?= $firstVariant['stock_quantity'] ?? 0 ?> đôi</strong>
+                                Tồn kho: <strong id="variantStock" class="text-success"><?= $firstVariant['stock_quantity'] ?? 0 ?> đôi</strong>
                             </div>
+                            <p id="colorStockMessage" class="small text-danger mt-2 mb-0 d-none">Màu này hiện đã hết hàng.</p>
                         <?php else: ?>
                             <p class="text-danger">Sản phẩm hiện đang tạm hết hàng.</p>
                         <?php endif; ?>
@@ -105,7 +136,7 @@
                         </div>
 
                         <div class="col-sm-8 col-7 pt-4">
-                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold" <?= empty($product['variants']) ? 'disabled' : '' ?>>
+                            <button type="submit" id="addToCartButton" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold" <?= empty($product['variants']) || (int)($firstVariant['stock_quantity'] ?? 0) <= 0 ? 'disabled' : '' ?>>
                                 <i class="fa-solid fa-cart-plus me-2"></i> Thêm Vào Giỏ Hàng
                             </button>
                         </div>
@@ -208,8 +239,9 @@ document.querySelectorAll('.variant-radio').forEach(radio => {
         const stock = this.getAttribute('data-stock');
         const color = this.getAttribute('data-color');
 
-        document.getElementById('variantStock').innerText = stock + ' đôi';
-        document.getElementById('variantColor').innerText = color;
+        document.getElementById('variantStock').innerText = stock > 0 ? stock + ' đôi' : 'Hết hàng';
+        document.getElementById('colorStockMessage').classList.add('d-none');
+        document.getElementById('addToCartButton').disabled = stock <= 0;
 
         if (sale && sale < price) {
             document.getElementById('displayPrice').innerText = new Intl.NumberFormat('vi-VN').format(sale) + ' ₫';
@@ -219,6 +251,32 @@ document.querySelectorAll('.variant-radio').forEach(radio => {
         } else {
             document.getElementById('displayPrice').innerText = new Intl.NumberFormat('vi-VN').format(price) + ' ₫';
             document.getElementById('displayOldPrice').classList.add('d-none');
+        }
+    });
+});
+
+document.querySelectorAll('.color-radio').forEach(radio => {
+    radio.addEventListener('change', function() {
+        let firstAvailableVariant = null;
+
+        document.querySelectorAll('.variant-option').forEach(option => {
+            const variant = option.querySelector('.variant-radio');
+            const isSelectedColor = option.dataset.color === this.value;
+            option.classList.toggle('d-none', !isSelectedColor);
+            variant.disabled = !isSelectedColor || parseInt(variant.dataset.stock, 10) <= 0;
+
+            if (isSelectedColor && !variant.disabled && !firstAvailableVariant) {
+                firstAvailableVariant = variant;
+            }
+        });
+
+        if (firstAvailableVariant) {
+            firstAvailableVariant.checked = true;
+            firstAvailableVariant.dispatchEvent(new Event('change'));
+        } else {
+            document.getElementById('variantStock').innerText = 'Hết hàng';
+            document.getElementById('colorStockMessage').classList.remove('d-none');
+            document.getElementById('addToCartButton').disabled = true;
         }
     });
 });
