@@ -84,7 +84,7 @@ $availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) 
                                         <td>
                                             <form action="<?= route_url('cart-update') ?>" method="POST" class="d-flex align-items-center gap-1">
                                                 <input type="hidden" name="variant_id" value="<?= $item['variant_id'] ?>">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary px-2" onclick="let input=this.nextElementSibling; if(input.value>1){input.value--; this.form.submit();}">-</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary px-2" onclick="let decrementInput=this.nextElementSibling; if(decrementInput.value>1){decrementInput.value--; this.form.submit();}">-</button>
                                                 <input type="number" name="quantity" value="<?= $item['quantity'] ?? 1 ?>" min="1" max="<?= $item['stock'] ?? 10 ?>" class="form-control form-control-sm text-center" style="width: 50px;" onchange="this.form.submit()">
                                                 <button type="button" class="btn btn-sm btn-outline-secondary px-2" onclick="let input=this.previousElementSibling; if(input.value < <?= (int)($item['stock'] ?? 10) ?>){input.value++; this.form.submit();} else { alert('Đã đạt số lượng tối đa trong kho!'); }">+</button>
                                             </form>
