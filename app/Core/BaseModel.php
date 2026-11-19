@@ -86,4 +86,9 @@ abstract class BaseModel
     {
         $this->db->rollBack();
     }
+
+    public function inTransaction(): bool
+    {
+        return $this->db->inTransaction();
+    }
 }

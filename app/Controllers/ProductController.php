@@ -6,6 +6,7 @@ use App\Core\BaseController;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\ProductReview;
 
 class ProductController extends BaseController
 {
@@ -61,11 +62,17 @@ class ProductController extends BaseController
         }
 
         $relatedProducts = $productModel->getRelatedProducts($id, $product['category_id'] ?? null, 4);
+        $reviewModel = new ProductReview();
+        $reviews = $reviewModel->getVisibleForProduct($id);
+        $user = auth();
+        $userReview = $user ? $reviewModel->findForUser($id, (int)$user['id']) : null;
 
         $this->view('detail', [
             'pageTitle'       => $product['name'] . ' - SoleVibe',
             'product'         => $product,
             'relatedProducts' => $relatedProducts,
+            'reviews'         => $reviews,
+            'userReview'      => $userReview,
         ]);
     }
 }

@@ -9,7 +9,7 @@
     <!-- Font Awesome 6 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap&amp;subset=vietnamese" rel="stylesheet">
     <style>
         :root {
             --admin-primary: #ff4757;
@@ -361,6 +361,15 @@
             </a>
             <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'categor')) ? 'active' : '' ?>" href="<?= route_url('admin-categories') ?>">
                 <i class="fa-solid fa-tags"></i> Danh mục
+            </a>
+            <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'brand')) ? 'active' : '' ?>" href="<?= route_url('admin-brands') ?>">
+                <i class="fa-solid fa-copyright"></i> Thương Hiệu
+            </a>
+            <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'inventory')) || (isset($_GET['act']) && str_contains($_GET['act'], 'stock-receipt')) ? 'active' : '' ?>" href="<?= route_url('admin-inventory') ?>">
+                <i class="fa-solid fa-boxes-stacked"></i> Tồn Kho / Nhập Kho
+            </a>
+            <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'review')) ? 'active' : '' ?>" href="<?= route_url('admin-reviews') ?>">
+                <i class="fa-solid fa-star"></i> Đánh Giá
             </a>
             <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'order')) ? 'active' : '' ?>" href="<?= route_url('admin-orders') ?>">
                 <i class="fa-solid fa-receipt"></i> Đơn hàng

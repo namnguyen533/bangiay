@@ -9,12 +9,16 @@ use App\Controllers\CheckoutController;
 use App\Controllers\AuthController;
 use App\Controllers\WishlistController;
 use App\Controllers\OrderController;
+use App\Controllers\ReviewController;
+use App\Controllers\Admin\BrandController as AdminBrandController;
 use App\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Controllers\Admin\ProductController as AdminProductController;
 use App\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Controllers\Admin\OrderController as AdminOrderController;
 use App\Controllers\Admin\VoucherController as AdminVoucherController;
 use App\Controllers\Admin\ReportController as AdminReportController;
+use App\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Controllers\Admin\StockReceiptController as AdminStockReceiptController;
 
 class Router
 {
@@ -28,6 +32,7 @@ class Router
             '', 'home' => (new HomeController())->index(),
             'products' => (new ProductController())->index(),
             'product-detail', 'detail' => (new ProductController())->detail(),
+            'review-submit' => (new ReviewController())->submit(),
             
             // Sản phẩm yêu thích (Wishlist)
             'wishlist'        => (new WishlistController())->index(),
@@ -75,7 +80,21 @@ class Router
 
             'admin-categories'      => (new AdminCategoryController())->index(),
             'admin-category-store'  => (new AdminCategoryController())->store(),
+            'admin-category-edit'   => (new AdminCategoryController())->edit(),
+            'admin-category-update' => (new AdminCategoryController())->update(),
             'admin-category-delete' => (new AdminCategoryController())->delete(),
+
+            'admin-brands'       => (new AdminBrandController())->index(),
+            'admin-brand-store'  => (new AdminBrandController())->store(),
+            'admin-brand-edit'   => (new AdminBrandController())->edit(),
+            'admin-brand-update' => (new AdminBrandController())->update(),
+            'admin-brand-delete' => (new AdminBrandController())->delete(),
+
+            'admin-inventory'            => (new AdminStockReceiptController())->index(),
+            'admin-stock-receipt-store'  => (new AdminStockReceiptController())->store(),
+
+            'admin-reviews'       => (new AdminReviewController())->index(),
+            'admin-review-update' => (new AdminReviewController())->update(),
 
             'admin-orders'              => (new AdminOrderController())->index(),
             'admin-order-detail'        => (new AdminOrderController())->detail(),

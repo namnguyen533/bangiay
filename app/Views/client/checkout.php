@@ -83,14 +83,14 @@ $availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) 
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Tỉnh / Thành Phố <span class="text-danger">*</span></label>
-                                <input type="text" name="province" id="inputProvince" class="form-control" placeholder="Ví dụ: Hà Nội">
+                                <input type="text" name="province" id="inputProvince" class="form-control" placeholder="Ví dụ: Hà Nội" <?= empty($savedAddresses) ? 'required' : '' ?>>
                             </div>
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Quận / Huyện <span class="text-danger">*</span></label>
-                                <input type="text" name="district" id="inputDistrict" class="form-control" placeholder="Ví dụ: Cầu Giấy">
+                                <input type="text" name="district" id="inputDistrict" class="form-control" placeholder="Ví dụ: Cầu Giấy" <?= empty($savedAddresses) ? 'required' : '' ?>>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Phường / Xã</label>
@@ -100,7 +100,7 @@ $availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) 
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Địa Chỉ Chi Tiết (Số nhà, tên đường, ngõ ngách) <span class="text-danger">*</span></label>
-                            <input type="text" name="address_line" id="inputAddressLine" class="form-control" placeholder="Ví dụ: Số 12 ngõ 45 phố Duy Tân">
+                            <input type="text" name="address_line" id="inputAddressLine" class="form-control" placeholder="Ví dụ: Số 12 ngõ 45 phố Duy Tân" <?= empty($savedAddresses) ? 'required' : '' ?>>
                         </div>
 
                         <?php if ($user): ?>
@@ -165,7 +165,7 @@ $availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) 
                     <div class="order-items-list mb-3" style="max-height: 280px; overflow-y: auto;">
                         <?php foreach ($items as $item): ?>
                             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
-                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
+                                <img src="<?= htmlspecialchars(function_exists('image_src') ? image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') : ($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-0 fw-bold small text-truncate" style="max-width: 200px;"><?= htmlspecialchars($item['product_name'] ?? '') ?></h6>
                                     <span class="small text-secondary">Size <?= htmlspecialchars($item['size'] ?? '') ?> | SL: <?= (int)($item['quantity'] ?? 1) ?></span>
@@ -237,15 +237,28 @@ function toggleAddressMode(mode) {
     const newContainer = document.getElementById('newAddressContainer');
     const inputName = document.getElementById('inputRecipientName');
     const inputPhone = document.getElementById('inputRecipientPhone');
+    const inputProvince = document.getElementById('inputProvince');
+    const inputDistrict = document.getElementById('inputDistrict');
+    const inputAddressLine = document.getElementById('inputAddressLine');
+    const savedChoice = document.getElementById('addr_choice_saved');
+    const newChoice = document.getElementById('addr_choice_new');
     
     if (mode === 'saved') {
         newContainer.classList.add('d-none');
         if (inputName) inputName.removeAttribute('required');
         if (inputPhone) inputPhone.removeAttribute('required');
+        if (inputProvince) inputProvince.removeAttribute('required');
+        if (inputDistrict) inputDistrict.removeAttribute('required');
+        if (inputAddressLine) inputAddressLine.removeAttribute('required');
+        if (savedChoice) savedChoice.checked = true;
     } else {
         newContainer.classList.remove('d-none');
         if (inputName) inputName.setAttribute('required', 'required');
         if (inputPhone) inputPhone.setAttribute('required', 'required');
+        if (inputProvince) inputProvince.setAttribute('required', 'required');
+        if (inputDistrict) inputDistrict.setAttribute('required', 'required');
+        if (inputAddressLine) inputAddressLine.setAttribute('required', 'required');
+        if (newChoice) newChoice.checked = true;
     }
 }
 

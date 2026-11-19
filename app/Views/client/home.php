@@ -12,9 +12,11 @@
                     <a href="<?= route_url('products') ?>" class="btn btn-primary btn-lg rounded-pill px-4">
                         <i class="fa-solid fa-fire me-2"></i> Mua Ngay Bây Giờ
                     </a>
-                    <a href="<?= route_url('products', ['brand_id' => 1]) ?>" class="btn btn-outline-light btn-lg rounded-pill px-4">
-                        Giày Nike Hot
-                    </a>
+                    <?php if (!empty($brands)): ?>
+                        <a href="<?= route_url('products', ['brand_id' => $brands[0]['id']]) ?>" class="btn btn-outline-light btn-lg rounded-pill px-4">
+                            Giày <?= htmlspecialchars($brands[0]['name']) ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="col-lg-5 text-center">
@@ -103,7 +105,7 @@
                                 <i class="fa-regular fa-heart text-danger"></i>
                             </a>
                             <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
-                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
+                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
                             </a>
                             <?php if (!empty($item['brand_name'])): ?>
                                 <span class="badge-brand"><?= htmlspecialchars($item['brand_name']) ?></span>

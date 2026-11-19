@@ -46,7 +46,7 @@ $availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) 
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-3">
-                                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 70px; height: 70px; object-fit: cover;">
+                                                <img src="<?= htmlspecialchars(function_exists('image_src') ? image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') : ($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 70px; height: 70px; object-fit: cover;">
                                                 <div>
                                                     <h6 class="mb-1 fw-bold">
                                                         <a href="<?= route_url('product-detail', ['id' => $item['product_id']]) ?>" class="text-dark text-decoration-none">

@@ -34,7 +34,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="category_id" id="cat_<?= $cat['id'] ?>" value="<?= $cat['id'] ?>" <?= ($filters['category_id'] == $cat['id']) ? 'checked' : '' ?> onchange="this.form.submit()">
                                     <label class="form-check-label" for="cat_<?= $cat['id'] ?>">
-                                        <?= htmlspecialchars($cat['name']) ?>
+                                        <?= str_repeat('&nbsp;&nbsp;', (int)($cat['depth'] ?? 0)) ?><?= htmlspecialchars($cat['name']) ?>
                                     </label>
                                 </div>
                             <?php endforeach; ?>
@@ -95,7 +95,7 @@
                                         <i class="fa-regular fa-heart text-danger"></i>
                                     </a>
                                     <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
-                                        <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
+                                        <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
                                     </a>
                                     <?php if (!empty($item['brand_name'])): ?>
                                         <span class="badge-brand"><?= htmlspecialchars($item['brand_name']) ?></span>
