@@ -1,3 +1,27 @@
+<?php
+/**
+ * @var array $items
+ * @var float $subtotal
+ * @var int $totalQuantity
+ * @var float $shippingFee
+ * @var ?array $appliedVoucher
+ * @var float $discountAmount
+ * @var float $finalTotal
+ * @var array $availableVouchers
+ */
+if (!function_exists('route_url')) {
+    require_once dirname(__DIR__, 2) . '/Core/Helper.php';
+}
+
+$items = !empty($items) && is_array($items) ? $items : [];
+$subtotal = $subtotal ?? 0.0;
+$totalQuantity = $totalQuantity ?? 0;
+$shippingFee = $shippingFee ?? 0.0;
+$appliedVoucher = $appliedVoucher ?? null;
+$discountAmount = $discountAmount ?? 0.0;
+$finalTotal = $finalTotal ?? 0.0;
+$availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) ? $availableVouchers : [];
+?>
 <div class="container my-5">
     <h3 class="fw-bold mb-4"><i class="fa-solid fa-cart-shopping me-2 text-danger"></i> Giỏ Hàng Của Bạn</h3>
 
@@ -22,11 +46,11 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-3">
-                                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name']) ?>" class="rounded-3 border" style="width: 70px; height: 70px; object-fit: cover;">
+                                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 70px; height: 70px; object-fit: cover;">
                                                 <div>
                                                     <h6 class="mb-1 fw-bold">
                                                         <a href="<?= route_url('product-detail', ['id' => $item['product_id']]) ?>" class="text-dark text-decoration-none">
-                                                            <?= htmlspecialchars($item['product_name']) ?>
+                                                            <?= htmlspecialchars($item['product_name'] ?? '') ?>
                                                         </a>
                                                     </h6>
                                                     
@@ -45,27 +69,27 @@
                                                         </form>
                                                     <?php else: ?>
                                                         <div class="small text-secondary">
-                                                            Size: <span class="badge bg-light text-dark border"><?= htmlspecialchars($item['size']) ?></span>
-                                                            | Màu: <?= htmlspecialchars($item['color']) ?>
+                                                            Size: <span class="badge bg-light text-dark border"><?= htmlspecialchars($item['size'] ?? '') ?></span>
+                                                            | Màu: <?= htmlspecialchars($item['color'] ?? '') ?>
                                                         </div>
                                                     <?php endif; ?>
 
                                                     <div class="small mt-1 text-muted">
-                                                        Tồn kho: <span class="fw-semibold <?= ($item['stock'] < 5) ? 'text-danger' : 'text-success' ?>"><?= $item['stock'] ?> đôi</span>
+                                                        Tồn kho: <span class="fw-semibold <?= (($item['stock'] ?? 0) < 5) ? 'text-danger' : 'text-success' ?>"><?= $item['stock'] ?? 0 ?> đôi</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="fw-semibold"><?= format_price($item['price']) ?></td>
+                                        <td class="fw-semibold"><?= format_price($item['price'] ?? 0) ?></td>
                                         <td>
                                             <form action="<?= route_url('cart-update') ?>" method="POST" class="d-flex align-items-center gap-1">
                                                 <input type="hidden" name="variant_id" value="<?= $item['variant_id'] ?>">
                                                 <button type="button" class="btn btn-sm btn-outline-secondary px-2" onclick="let input=this.nextElementSibling; if(input.value>1){input.value--; this.form.submit();}">-</button>
-                                                <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" max="<?= $item['stock'] ?>" class="form-control form-control-sm text-center" style="width: 50px;" onchange="this.form.submit()">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary px-2" onclick="let input=this.previousElementSibling; if(input.value < <?= $item['stock'] ?>){input.value++; this.form.submit();} else { alert('Đã đạt số lượng tối đa trong kho!'); }">+</button>
+                                                <input type="number" name="quantity" value="<?= $item['quantity'] ?? 1 ?>" min="1" max="<?= $item['stock'] ?? 10 ?>" class="form-control form-control-sm text-center" style="width: 50px;" onchange="this.form.submit()">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary px-2" onclick="let input=this.previousElementSibling; if(input.value < <?= (int)($item['stock'] ?? 10) ?>){input.value++; this.form.submit();} else { alert('Đã đạt số lượng tối đa trong kho!'); }">+</button>
                                             </form>
                                         </td>
-                                        <td class="fw-bold text-danger"><?= format_price($item['price'] * $item['quantity']) ?></td>
+                                        <td class="fw-bold text-danger"><?= format_price(($item['price'] ?? 0) * ($item['quantity'] ?? 1)) ?></td>
                                         <td class="text-end">
                                             <a href="<?= route_url('cart-remove', ['variant_id' => $item['variant_id']]) ?>" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn bỏ sản phẩm này?');">
                                                 <i class="fa-solid fa-trash-can"></i>
@@ -96,15 +120,15 @@
                                 <div class="col-md-6">
                                     <div class="border rounded-3 p-3 bg-light d-flex justify-content-between align-items-center">
                                         <div>
-                                            <div class="fw-bold text-danger"><?= htmlspecialchars($voc['code']) ?></div>
-                                            <small class="text-secondary d-block"><?= htmlspecialchars($voc['description'] ?: 'Mã ưu đãi') ?></small>
-                                            <small class="text-muted">Đơn từ: <?= format_price($voc['min_order_value']) ?></small>
+                                            <div class="fw-bold text-danger"><?= htmlspecialchars($voc['code'] ?? '') ?></div>
+                                            <small class="text-secondary d-block"><?= htmlspecialchars($voc['description'] ?? 'Mã ưu đãi') ?></small>
+                                            <small class="text-muted">Đơn từ: <?= format_price($voc['min_order_value'] ?? 0) ?></small>
                                         </div>
                                         <form action="<?= route_url('cart-apply-voucher') ?>" method="POST" class="ms-2">
-                                            <input type="hidden" name="voucher_code" value="<?= htmlspecialchars($voc['code']) ?>">
+                                            <input type="hidden" name="voucher_code" value="<?= htmlspecialchars($voc['code'] ?? '') ?>">
                                             <input type="hidden" name="redirect_to" value="<?= route_url('cart') ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" <?= (!empty($appliedVoucher) && $appliedVoucher['code'] === $voc['code']) ? 'disabled' : '' ?>>
-                                                <?= (!empty($appliedVoucher) && $appliedVoucher['code'] === $voc['code']) ? 'Đang dùng' : 'Áp dụng' ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" <?= (!empty($appliedVoucher) && ($appliedVoucher['code'] ?? '') === ($voc['code'] ?? '')) ? 'disabled' : '' ?>>
+                                                <?= (!empty($appliedVoucher) && ($appliedVoucher['code'] ?? '') === ($voc['code'] ?? '')) ? 'Đang dùng' : 'Áp dụng' ?>
                                             </button>
                                         </form>
                                     </div>
@@ -125,7 +149,7 @@
                             <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-0">
                                 <div>
                                     <i class="fa-solid fa-circle-check me-1"></i>
-                                    <strong><?= htmlspecialchars($appliedVoucher['code']) ?></strong>
+                                    <strong><?= htmlspecialchars($appliedVoucher['code'] ?? '') ?></strong>
                                     <small class="d-block text-success-emphasis">Đã giảm <?= format_price($discountAmount) ?></small>
                                 </div>
                                 <a href="<?= route_url('cart-remove-voucher', ['redirect_to' => route_url('cart')]) ?>" class="btn btn-sm btn-outline-danger py-1 px-2 rounded-circle" title="Gỡ mã">
@@ -162,7 +186,7 @@
                         </span>
                     </div>
 
-                    <?php if ($subtotal < 2000000): ?>
+                    <?php if ($subtotal < 2000000 && $subtotal > 0): ?>
                         <div class="alert alert-warning small py-2 mb-3">
                             <i class="fa-solid fa-circle-exclamation me-1"></i> Mua thêm <strong><?= format_price(2000000 - $subtotal) ?></strong> để nhận <strong>Freeship</strong>!
                         </div>

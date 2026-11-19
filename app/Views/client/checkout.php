@@ -1,3 +1,31 @@
+<?php
+/**
+ * @var array $items
+ * @var float $subtotal
+ * @var float $shippingFee
+ * @var ?array $appliedVoucher
+ * @var float $discountAmount
+ * @var float $finalTotal
+ * @var ?array $user
+ * @var array $savedAddresses
+ * @var ?array $defaultAddress
+ * @var array $availableVouchers
+ */
+if (!function_exists('route_url')) {
+    require_once dirname(__DIR__, 2) . '/Core/Helper.php';
+}
+
+$items = !empty($items) && is_array($items) ? $items : [];
+$subtotal = $subtotal ?? 0.0;
+$shippingFee = $shippingFee ?? 0.0;
+$appliedVoucher = $appliedVoucher ?? null;
+$discountAmount = $discountAmount ?? 0.0;
+$finalTotal = $finalTotal ?? 0.0;
+$user = $user ?? null;
+$savedAddresses = !empty($savedAddresses) && is_array($savedAddresses) ? $savedAddresses : [];
+$defaultAddress = $defaultAddress ?? null;
+$availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) ? $availableVouchers : [];
+?>
 <div class="container my-5">
     <h3 class="fw-bold mb-4"><i class="fa-solid fa-credit-card me-2 text-danger"></i> Thanh Toán Đơn Hàng</h3>
 
@@ -14,17 +42,17 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold text-secondary small text-uppercase">Chọn từ sổ địa chỉ đã lưu:</label>
                             <?php foreach ($savedAddresses as $idx => $addr): ?>
-                                <div class="form-check p-3 border rounded-3 mb-2 <?= $addr['is_default'] ? 'border-danger bg-danger-subtle bg-opacity-10' : 'bg-light' ?>">
-                                    <input class="form-check-input ms-0 me-2" type="radio" name="selected_address_id" id="addr_<?= $addr['id'] ?>" value="<?= $addr['id'] ?>" <?= ($addr['is_default'] || $idx === 0) ? 'checked' : '' ?> onchange="toggleAddressMode('saved')">
+                                <div class="form-check p-3 border rounded-3 mb-2 <?= !empty($addr['is_default']) ? 'border-danger bg-danger-subtle bg-opacity-10' : 'bg-light' ?>">
+                                    <input class="form-check-input ms-0 me-2" type="radio" name="selected_address_id" id="addr_<?= $addr['id'] ?>" value="<?= $addr['id'] ?>" <?= (!empty($addr['is_default']) || $idx === 0) ? 'checked' : '' ?> onchange="toggleAddressMode('saved')">
                                     <label class="form-check-label d-block ms-4" for="addr_<?= $addr['id'] ?>">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <strong><?= htmlspecialchars($addr['recipient_name']) ?></strong> - <?= htmlspecialchars($addr['phone']) ?>
-                                            <?php if ($addr['is_default']): ?>
+                                            <strong><?= htmlspecialchars($addr['recipient_name'] ?? '') ?></strong> - <?= htmlspecialchars($addr['phone'] ?? '') ?>
+                                            <?php if (!empty($addr['is_default'])): ?>
                                                 <span class="badge bg-danger small">Mặc định</span>
                                             <?php endif; ?>
                                         </div>
                                         <div class="small text-secondary mt-1">
-                                            <?= htmlspecialchars("{$addr['address_line']}, {$addr['ward']}, {$addr['district']}, {$addr['province']}") ?>
+                                            <?= htmlspecialchars(($addr['address_line'] ?? '') . ', ' . ($addr['ward'] ?? '') . ', ' . ($addr['district'] ?? '') . ', ' . ($addr['province'] ?? '')) ?>
                                         </div>
                                     </label>
                                 </div>
@@ -137,12 +165,12 @@
                     <div class="order-items-list mb-3" style="max-height: 280px; overflow-y: auto;">
                         <?php foreach ($items as $item): ?>
                             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
-                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
+                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0 fw-bold small text-truncate" style="max-width: 200px;"><?= htmlspecialchars($item['product_name']) ?></h6>
-                                    <span class="small text-secondary">Size <?= htmlspecialchars($item['size']) ?> | SL: <?= $item['quantity'] ?></span>
+                                    <h6 class="mb-0 fw-bold small text-truncate" style="max-width: 200px;"><?= htmlspecialchars($item['product_name'] ?? '') ?></h6>
+                                    <span class="small text-secondary">Size <?= htmlspecialchars($item['size'] ?? '') ?> | SL: <?= (int)($item['quantity'] ?? 1) ?></span>
                                 </div>
-                                <span class="fw-bold small text-danger"><?= format_price($item['price'] * $item['quantity']) ?></span>
+                                <span class="fw-bold small text-danger"><?= format_price(($item['price'] ?? 0) * ($item['quantity'] ?? 1)) ?></span>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -152,7 +180,7 @@
                         <?php if (!empty($appliedVoucher)): ?>
                             <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-0 small">
                                 <div>
-                                    <i class="fa-solid fa-tag me-1"></i> Mã: <strong><?= htmlspecialchars($appliedVoucher['code']) ?></strong>
+                                    <i class="fa-solid fa-tag me-1"></i> Mã: <strong><?= htmlspecialchars($appliedVoucher['code'] ?? '') ?></strong>
                                     <span class="d-block text-success-emphasis">Đã giảm <?= format_price($discountAmount) ?></span>
                                 </div>
                                 <a href="<?= route_url('cart-remove-voucher', ['redirect_to' => route_url('checkout')]) ?>" class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill small" title="Gỡ">Bỏ mã</a>
@@ -222,7 +250,9 @@ function toggleAddressMode(mode) {
 }
 
 function applyCheckoutVoucher() {
-    const val = document.getElementById('checkoutVoucherInput').value.trim();
+    const input = document.getElementById('checkoutVoucherInput');
+    if (!input) return;
+    const val = input.value.trim();
     if (!val) {
         alert('Vui lòng nhập mã giảm giá!');
         return;

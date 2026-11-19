@@ -1,3 +1,12 @@
+<?php
+/**
+ * @var array $orders
+ */
+if (!function_exists('route_url')) {
+    require_once dirname(__DIR__, 2) . '/Core/Helper.php';
+}
+$orders = !empty($orders) && is_array($orders) ? $orders : [];
+?>
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -29,22 +38,22 @@
                             <tr>
                                 <td class="fw-bold text-danger">
                                     <a href="<?= route_url('order-detail', ['id' => $ord['id']]) ?>" class="text-danger text-decoration-none">
-                                        <?= htmlspecialchars($ord['order_code']) ?>
+                                        <?= htmlspecialchars($ord['order_code'] ?? '') ?>
                                     </a>
                                 </td>
-                                <td class="small text-secondary"><?= date('d/m/Y H:i', strtotime($ord['created_at'])) ?></td>
+                                <td class="small text-secondary"><?= !empty($ord['created_at']) ? date('d/m/Y H:i', strtotime($ord['created_at'])) : '' ?></td>
                                 <td><?= (int)($ord['total_quantity'] ?? 1) ?> đôi</td>
-                                <td class="fw-bold text-dark"><?= format_price($ord['total_amount']) ?></td>
+                                <td class="fw-bold text-dark"><?= format_price($ord['total_amount'] ?? 0) ?></td>
                                 <td>
-                                    <?php if ($ord['payment_status'] === 'paid'): ?>
+                                    <?php if (($ord['payment_status'] ?? '') === 'paid'): ?>
                                         <span class="badge bg-success-subtle text-success border border-success-subtle">Đã thanh toán</span>
                                     <?php else: ?>
                                         <span class="badge bg-warning-subtle text-dark border border-warning-subtle">Chưa thanh toán</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge <?= order_status_badge($ord['order_status']) ?>">
-                                        <?= order_status_label($ord['order_status']) ?>
+                                    <span class="badge <?= order_status_badge($ord['order_status'] ?? 'pending') ?>">
+                                        <?= order_status_label($ord['order_status'] ?? 'pending') ?>
                                     </span>
                                 </td>
                                 <td class="text-end">
@@ -53,7 +62,7 @@
                                             <i class="fa-solid fa-eye me-1"></i> Chi Tiết
                                         </a>
 
-                                        <?php if ($ord['order_status'] === 'pending'): ?>
+                                        <?php if (($ord['order_status'] ?? '') === 'pending'): ?>
                                             <form action="<?= route_url('order-cancel') ?>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không? Số lượng sẽ được hoàn lại kho.');">
                                                 <input type="hidden" name="id" value="<?= $ord['id'] ?>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Hủy đơn hàng">
