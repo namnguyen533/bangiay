@@ -188,7 +188,7 @@ class Product extends BaseModel
         return $this->fetchAll($sql);
     }
 
-    public function createProduct(array $data, ?int $categoryId = null, ?string $imageUrl = null): int
+    public function createProduct(array $data, ?int $categoryId = null, $imageUrls = null): int
     {
         $productId = $this->insert('products', $data);
 
@@ -199,20 +199,28 @@ class Product extends BaseModel
             ]);
         }
 
-        if ($imageUrl) {
+        if (is_string($imageUrls)) {
+            $imageUrls = $imageUrls !== '' ? [$imageUrls] : [];
+        }
+
+        if (!is_array($imageUrls) || empty($imageUrls)) {
+            $imageUrls = ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600'];
+        }
+
+        foreach (array_values(array_unique($imageUrls)) as $index => $imageUrl) {
             $this->insert('product_images', [
                 'product_id' => $productId,
                 'image_url' => $imageUrl,
                 'alt_text' => $data['name'],
-                'sort_order' => 1,
-                'is_primary' => 1
+                'sort_order' => $index + 1,
+                'is_primary' => $index === 0 ? 1 : 0
             ]);
         }
 
         return $productId;
     }
 
-    public function updateProduct(int $id, array $data, ?int $categoryId = null, ?string $imageUrl = null): bool
+    public function updateProduct(int $id, array $data, ?int $categoryId = null, $imageUrls = null): bool
     {
         $this->update('products', $data, 'id = :id', ['id' => $id]);
 
@@ -224,15 +232,22 @@ class Product extends BaseModel
             ]);
         }
 
-        if ($imageUrl) {
-            $this->delete('product_images', 'product_id = :id AND is_primary = 1', ['id' => $id]);
-            $this->insert('product_images', [
-                'product_id' => $id,
-                'image_url' => $imageUrl,
-                'alt_text' => $data['name'] ?? 'Giày',
-                'sort_order' => 1,
-                'is_primary' => 1
-            ]);
+        if (is_string($imageUrls)) {
+            $imageUrls = $imageUrls !== '' ? [$imageUrls] : [];
+        }
+
+        if (is_array($imageUrls)) {
+            $this->delete('product_images', 'product_id = :id', ['id' => $id]);
+
+            foreach (array_values(array_unique($imageUrls)) as $index => $imageUrl) {
+                $this->insert('product_images', [
+                    'product_id' => $id,
+                    'image_url' => $imageUrl,
+                    'alt_text' => $data['name'] ?? 'Giày',
+                    'sort_order' => $index + 1,
+                    'is_primary' => $index === 0 ? 1 : 0
+                ]);
+            }
         }
 
         return true;

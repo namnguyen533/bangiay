@@ -53,8 +53,22 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Link Ảnh Sản Phẩm (URL)</label>
+                <label class="form-label fw-bold">Ảnh Chính (URL)</label>
                 <input type="url" name="image_url" class="form-control" value="<?= htmlspecialchars($product['image_url'] ?? '') ?>" placeholder="https://images.unsplash.com/...">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Các Hình Ảnh Chi Tiết (URL)</label>
+                <?php
+                $detailImageUrls = [];
+                foreach ($product['images'] as $index => $image) {
+                    if ((int)($image['is_primary'] ?? 0) !== 1) {
+                        $detailImageUrls[] = $image['image_url'];
+                    }
+                }
+                ?>
+                <textarea name="image_urls" class="form-control" rows="4" placeholder="Mỗi link ảnh chi tiết đặt trên một dòng"><?= htmlspecialchars(implode("\n", $detailImageUrls)) ?></textarea>
+                <div class="form-text">Để trống hoặc bỏ ảnh phụ thì ảnh đó sẽ bị xóa khỏi thư viện chi tiết.</div>
             </div>
 
             <div class="mb-4">

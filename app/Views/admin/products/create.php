@@ -38,9 +38,15 @@
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Link Ảnh Sản Phẩm (URL)</label>
-                    <input type="url" name="image_url" class="form-control" placeholder="https://images.unsplash.com/...">
+                    <label class="form-label fw-bold">Ảnh Chính (URL)</label>
+                    <input type="url" name="image_url" id="primaryImageUrl" class="form-control" placeholder="https://images.unsplash.com/...">
                 </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Các Hình Ảnh Chi Tiết (URL)</label>
+                <textarea name="image_urls" class="form-control" rows="4" placeholder="Mỗi link ảnh chi tiết đặt trên một dòng&#10;https://example.com/goc-ngang.jpg&#10;https://example.com/de-giay.jpg"></textarea>
+                <div class="form-text">Thêm nhiều link để khách hàng xem từng góc của đôi giày. Ảnh chính ở trên sẽ hiển thị trước.</div>
             </div>
 
             <div class="row g-3 mb-4">

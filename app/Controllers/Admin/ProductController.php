@@ -52,6 +52,7 @@ class ProductController extends BaseController
         $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         $description = trim($_POST['description'] ?? '');
         $imageUrl = trim($_POST['image_url'] ?? '');
+        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '');
         $price = (float)($_POST['price'] ?? 0);
         $salePrice = !empty($_POST['sale_price']) ? (float)$_POST['sale_price'] : null;
         $stock = max(0, (int)($_POST['stock_quantity'] ?? 10));
@@ -71,7 +72,10 @@ class ProductController extends BaseController
             'slug'        => $slug,
             'description' => $description,
             'status'      => 'active',
-        ], $categoryId, $imageUrl ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600');
+        ], $categoryId, array_merge(
+            $imageUrl ? [$imageUrl] : [],
+            $imageUrls
+        ));
 
         // Tạo các biến thể kích thước giày
         foreach ($sizes as $size) {
@@ -121,6 +125,7 @@ class ProductController extends BaseController
         $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         $description = trim($_POST['description'] ?? '');
         $imageUrl = trim($_POST['image_url'] ?? '');
+        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '');
         $status = $_POST['status'] ?? 'active';
 
         if (empty($name)) {
@@ -133,7 +138,10 @@ class ProductController extends BaseController
             'name'        => $name,
             'description' => $description,
             'status'      => $status,
-        ], $categoryId, $imageUrl);
+        ], $categoryId, array_merge(
+            $imageUrl ? [$imageUrl] : [],
+            $imageUrls
+        ));
 
         set_flash('success', 'Đã cập nhật sản phẩm giày thành công!', 'success');
         $this->redirect(route_url('admin-products'));
@@ -148,5 +156,19 @@ class ProductController extends BaseController
         }
 
         $this->redirect(route_url('admin-products'));
+    }
+
+    private function parseImageUrls(string $text): array
+    {
+        $urls = [];
+
+        foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $url) {
+            $url = trim($url);
+            if ($url !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
+                $urls[] = $url;
+            }
+        }
+
+        return array_values(array_unique($urls));
     }
 }
