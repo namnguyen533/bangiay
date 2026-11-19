@@ -29,21 +29,35 @@ class User extends BaseModel
     public function register(string $fullName, string $email, string $phone, string $password): int
     {
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $userId = $this->insert('users', [
-            'full_name'     => $fullName,
-            'email'         => $email,
-            'phone'         => $phone,
-            'password_hash' => $hash,
-            'status'        => 'active'
-        ]);
 
-        // Mặc định role là Customer (id: 4)
-        $this->insert('user_roles', [
-            'user_id' => $userId,
-            'role_id' => 4
-        ]);
+        $this->db->beginTransaction();
+        try {
+            $userId = $this->insert('users', [
+                'full_name'     => $fullName,
+                'email'         => $email,
+                'phone'         => $phone,
+                'password_hash' => $hash,
+                'status'        => 'active'
+            ]);
 
-        return $userId;
+            if ($userId <= 0) {
+                throw new \RuntimeException('Failed to create user record.');
+            }
+
+            $this->insert('user_roles', [
+                'user_id' => $userId,
+                'role_id' => 4
+            ]);
+
+            $this->db->commit();
+            return $userId;
+        } catch (\Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $exception;
+        }
     }
 
     public function checkLogin(string $email, string $password): ?array

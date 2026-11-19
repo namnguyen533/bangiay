@@ -73,14 +73,60 @@ class AuthController extends BaseController
 
     public function postRegister(): void
     {
-        $fullName = trim($_POST['full_name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
+        $fullNameInput = $_POST['full_name'] ?? null;
+        $emailInput = $_POST['email'] ?? null;
+        $phoneInput = $_POST['phone'] ?? '';
+        $password = $_POST['password'] ?? null;
+        $confirmPassword = $_POST['confirm_password'] ?? null;
 
-        if (empty($fullName) || empty($email) || empty($password)) {
+        if (
+            !is_string($fullNameInput) ||
+            !is_string($emailInput) ||
+            !is_string($phoneInput) ||
+            !is_string($password) ||
+            !is_string($confirmPassword)
+        ) {
             set_flash('error', 'Vui lòng điền đầy đủ các thông tin bắt buộc!', 'danger');
+            $this->redirect(route_url('register'));
+        }
+
+        $fullName = trim($fullNameInput);
+        $email = strtolower(trim($emailInput));
+        $phone = trim($phoneInput);
+        $nameLength = preg_match_all('/./us', $fullName);
+
+        if ($nameLength === false || $nameLength < 2 || $nameLength > 100 || preg_match('/[\x00-\x1F\x7F]/', $fullName)) {
+            set_flash('error', 'Họ và tên phải có từ 2 đến 100 ký tự hợp lệ!', 'danger');
+            $this->redirect(route_url('register'));
+        }
+
+        if (strlen($email) > 254 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            set_flash('error', 'Vui lòng nhập địa chỉ email hợp lệ!', 'danger');
+            $this->redirect(route_url('register'));
+        }
+
+        if ($phone !== '') {
+            $digits = preg_replace('/\D/', '', $phone);
+            if (
+                strlen($phone) > 20 ||
+                preg_match('/\A\+?[0-9\s().-]+\z/', $phone) !== 1 ||
+                $digits === null ||
+                strlen($digits) < 8 ||
+                strlen($digits) > 15
+            ) {
+                set_flash('error', 'Số điện thoại không hợp lệ!', 'danger');
+                $this->redirect(route_url('register'));
+            }
+        }
+
+        $passwordLength = preg_match_all('/./us', $password);
+        if ($passwordLength === false || $passwordLength < 8) {
+            set_flash('error', 'Mật khẩu phải có ít nhất 8 ký tự!', 'danger');
+            $this->redirect(route_url('register'));
+        }
+
+        if (strlen($password) > 72) {
+            set_flash('error', 'Mật khẩu không được dài quá 72 byte!', 'danger');
             $this->redirect(route_url('register'));
         }
 
@@ -95,7 +141,13 @@ class AuthController extends BaseController
             $this->redirect(route_url('register'));
         }
 
-        $userId = $this->userModel->register($fullName, $email, $phone, $password);
+        try {
+            $userId = $this->userModel->register($fullName, $email, $phone, $password);
+        } catch (\PDOException $exception) {
+            error_log('Account registration failed: ' . $exception->getMessage());
+            set_flash('error', 'Không thể lưu thông tin đăng ký lúc này. Vui lòng thử lại sau!', 'danger');
+            $this->redirect(route_url('register'));
+        }
 
         if ($userId) {
             set_flash('success', 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.', 'success');
