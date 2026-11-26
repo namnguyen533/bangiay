@@ -84,11 +84,11 @@
 </section>
 
 <!-- Featured Products Section -->
-<section class="container my-5">
+<section id="featured-products" class="container my-5">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
             <span class="text-danger fw-bold text-uppercase small">Được yêu thích nhất</span>
-            <h3 class="fw-bold mb-0">Sản Phẩm Giày Bán Chạy</h3>
+            <h3 class="fw-bold mb-0">Sản Phẩm Giày Nổi Bật</h3>
         </div>
         <a href="<?= route_url('products') ?>" class="btn btn-outline-dark rounded-pill btn-sm px-3">
             Xem Tất Cả <i class="fa-solid fa-arrow-right ms-1"></i>
@@ -144,6 +144,31 @@
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Phân trang Trang Chủ -->
+    <?php if (!empty($totalPages) && $totalPages > 1): ?>
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : '' ?>">
+                    <a class="page-link rounded-pill me-1 px-3" href="<?= route_url('', ['page' => $currentPage - 1]) ?>#featured-products">
+                        <i class="fa-solid fa-chevron-left me-1"></i> Trước
+                    </a>
+                </li>
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?= ($i === $currentPage) ? 'active' : '' ?>">
+                        <a class="page-link rounded-circle mx-1 text-center d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" href="<?= route_url('', ['page' => $i]) ?>#featured-products">
+                            <?= $i ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?= ($currentPage >= $totalPages) ? 'disabled' : '' ?>">
+                    <a class="page-link rounded-pill ms-1 px-3" href="<?= route_url('', ['page' => $currentPage + 1]) ?>#featured-products">
+                        Sau <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    <?php endif; ?>
 </section>
 
 <!-- Brand Showcase -->

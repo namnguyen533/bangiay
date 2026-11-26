@@ -95,4 +95,13 @@ class ProductVariant extends BaseModel
             throw new \RuntimeException('Không tìm thấy biến thể để cộng tồn kho.');
         }
     }
+
+    public function getAvailableSizes(): array
+    {
+        $sql = "SELECT DISTINCT size 
+                FROM product_variants 
+                WHERE status = 'active' AND size IS NOT NULL AND size != '' 
+                ORDER BY CAST(size AS DECIMAL(4,1)) ASC, size ASC";
+        return array_column($this->fetchAll($sql), 'size');
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\BaseController;
 use App\Models\Product;
 use App\Models\ProductReview;
+use App\Models\Order;
 use PDOException;
 
 class ReviewController extends BaseController
@@ -12,11 +13,19 @@ class ReviewController extends BaseController
     public function submit(): void
     {
         $this->requireLogin();
+        $userId = (int)auth()['id'];
         $productId = (int)($_POST['product_id'] ?? 0);
         $product = (new Product())->getDetail($productId);
         if (!$product || $product['status'] !== 'active') {
             set_flash('error', 'Không tìm thấy sản phẩm đang bán để đánh giá.', 'danger');
             $this->redirect(route_url('products'));
+        }
+
+        // Kiểm tra logic: Chỉ khách hàng đã mua sản phẩm này mới được đánh giá
+        $hasPurchased = (new Order())->hasUserPurchasedProduct($userId, $productId);
+        if (!$hasPurchased) {
+            set_flash('error', 'Chỉ khách hàng đã mua sản phẩm này thành công mới có thể gửi đánh giá.', 'warning');
+            $this->redirect(route_url('product-detail', ['id' => $productId]));
         }
 
         $rating = filter_var($_POST['rating'] ?? null, FILTER_VALIDATE_INT);
