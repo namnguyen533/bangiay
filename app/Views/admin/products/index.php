@@ -1,4 +1,10 @@
 <div class="container-fluid">
+    <?php if (!empty($lowStock)): ?>
+        <div class="alert alert-warning d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-triangle-exclamation me-2"></i><strong><?= count($lowStock) ?></strong> biến thể đang sắp hết hàng (tồn không quá 5 đôi).</span>
+            <a href="<?= route_url('admin-inventory') ?>" class="alert-link">Xem tồn kho / nhập hàng</a>
+        </div>
+    <?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold mb-1">Danh Sách Sản Phẩm Giày</h4>
@@ -30,7 +36,7 @@
                         <?php foreach ($products as $p): ?>
                             <tr>
                                 <td>
-                                    <img src="<?= htmlspecialchars($p['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
+                                    <img src="<?= htmlspecialchars(image_src($p['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark"><?= htmlspecialchars($p['name']) ?></div>
@@ -60,9 +66,10 @@
                                     <a href="<?= route_url('admin-product-edit', ['id' => $p['id']]) ?>" class="btn btn-sm btn-outline-primary me-1">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
-                                    <a href="<?= route_url('admin-product-delete', ['id' => $p['id']]) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm giày này?');">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
+                                    <form class="d-inline" method="POST" action="<?= route_url('admin-product-delete') ?>" onsubmit="return confirm('Ẩn sản phẩm này khỏi cửa hàng?')">
+                                        <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                                        <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Ẩn sản phẩm"><i class="fa-solid fa-eye-slash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

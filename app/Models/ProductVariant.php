@@ -14,6 +14,39 @@ class ProductVariant extends BaseModel
         return $this->fetchAll($sql, ['product_id' => $productId]);
     }
 
+    public function getAllByProductId(int $productId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM product_variants WHERE product_id = :product_id ORDER BY size, color, id',
+            ['product_id' => $productId]
+        );
+    }
+
+    public function getAllForInventory(): array
+    {
+        return $this->fetchAll(
+            "SELECT pv.id, pv.sku, pv.size, pv.color, pv.price, pv.stock_quantity, pv.status,
+                    p.id AS product_id, p.name AS product_name
+             FROM product_variants pv
+             JOIN products p ON p.id = pv.product_id
+             WHERE p.status = 'active' AND pv.status = 'active'
+             ORDER BY p.name, pv.size, pv.color"
+        );
+    }
+
+    public function getLowStock(int $threshold): array
+    {
+        return $this->fetchAll(
+            "SELECT pv.id, pv.sku, pv.size, pv.color, pv.stock_quantity,
+                    p.name AS product_name
+             FROM product_variants pv
+             JOIN products p ON p.id = pv.product_id
+             WHERE p.status = 'active' AND pv.status = 'active' AND pv.stock_quantity <= :threshold
+             ORDER BY pv.stock_quantity, p.name",
+            ['threshold' => $threshold]
+        );
+    }
+
     public function findById(int $id): ?array
     {
         $sql = "SELECT pv.*, p.name AS product_name, pi.image_url
@@ -84,5 +117,25 @@ class ProductVariant extends BaseModel
             'id' => $variantId,
             'check_qty' => $quantity
         ]);
+    }
+
+    public function increaseStock(int $variantId, int $quantity): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE product_variants SET stock_quantity = stock_quantity + :quantity WHERE id = :id'
+        );
+        $stmt->execute(['quantity' => $quantity, 'id' => $variantId]);
+        if ($stmt->rowCount() !== 1) {
+            throw new \RuntimeException('Không tìm thấy biến thể để cộng tồn kho.');
+        }
+    }
+
+    public function getAvailableSizes(): array
+    {
+        $sql = "SELECT DISTINCT size 
+                FROM product_variants 
+                WHERE status = 'active' AND size IS NOT NULL AND size != '' 
+                ORDER BY CAST(size AS DECIMAL(4,1)) ASC, size ASC";
+        return array_column($this->fetchAll($sql), 'size');
     }
 }

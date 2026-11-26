@@ -12,9 +12,11 @@
                     <a href="<?= route_url('products') ?>" class="btn btn-primary btn-lg rounded-pill px-4">
                         <i class="fa-solid fa-fire me-2"></i> Mua Ngay Bây Giờ
                     </a>
-                    <a href="<?= route_url('products', ['brand_id' => 1]) ?>" class="btn btn-outline-light btn-lg rounded-pill px-4">
-                        Giày Nike Hot
-                    </a>
+                    <?php if (!empty($brands)): ?>
+                        <a href="<?= route_url('products', ['brand_id' => $brands[0]['id']]) ?>" class="btn btn-outline-light btn-lg rounded-pill px-4">
+                            Giày <?= htmlspecialchars($brands[0]['name']) ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="col-lg-5 text-center">
@@ -83,11 +85,11 @@
 </section>
 
 <!-- Featured Products Section -->
-<section class="container my-5">
+<section id="featured-products" class="container my-5">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
             <span class="text-danger fw-bold text-uppercase small">Được yêu thích nhất</span>
-            <h3 class="fw-bold mb-0">Sản Phẩm Giày Bán Chạy</h3>
+            <h3 class="fw-bold mb-0">Sản Phẩm Giày Nổi Bật</h3>
         </div>
         <a href="<?= route_url('products') ?>" class="btn btn-outline-dark rounded-pill btn-sm px-3">
             Xem Tất Cả <i class="fa-solid fa-arrow-right ms-1"></i>
@@ -101,7 +103,7 @@
                     <div class="product-card h-100 d-flex flex-column">
                         <div class="product-img-box">
                             <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
-                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
+                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
                             </a>
                             <?php if (!empty($item['brand_name'])): ?>
                                 <span class="badge-brand"><?= htmlspecialchars($item['brand_name']) ?></span>
@@ -143,6 +145,31 @@
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Phân trang Trang Chủ -->
+    <?php if (!empty($totalPages) && $totalPages > 1): ?>
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : '' ?>">
+                    <a class="page-link rounded-pill me-1 px-3" href="<?= route_url('', ['page' => $currentPage - 1]) ?>#featured-products">
+                        <i class="fa-solid fa-chevron-left me-1"></i> Trước
+                    </a>
+                </li>
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?= ($i === $currentPage) ? 'active' : '' ?>">
+                        <a class="page-link rounded-circle mx-1 text-center d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" href="<?= route_url('', ['page' => $i]) ?>#featured-products">
+                            <?= $i ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?= ($currentPage >= $totalPages) ? 'disabled' : '' ?>">
+                    <a class="page-link rounded-pill ms-1 px-3" href="<?= route_url('', ['page' => $currentPage + 1]) ?>#featured-products">
+                        Sau <i class="fa-solid fa-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    <?php endif; ?>
 </section>
 
 <!-- Brand Showcase -->

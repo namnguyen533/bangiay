@@ -83,6 +83,21 @@ class Order extends BaseModel
         return $this->update('orders', ['order_status' => $status], 'id = :id', ['id' => $orderId]);
     }
 
+    public function hasUserPurchasedProduct(int $userId, int $productId): bool
+    {
+        $sql = "SELECT COUNT(*) 
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                JOIN product_variants pv ON oi.variant_id = pv.id
+                WHERE o.user_id = :user_id 
+                  AND pv.product_id = :product_id 
+                  AND o.order_status IN ('completed', 'delivered', 'confirmed', 'shipping', 'pending')";
+        return ((int)$this->fetchColumn($sql, [
+            'user_id'    => $userId,
+            'product_id' => $productId
+        ])) > 0;
+    }
+
     public function getDashboardStats(): array
     {
         $revenue = (float)$this->fetchColumn("SELECT SUM(total_amount) FROM orders WHERE order_status IN ('confirmed','shipping','completed')");

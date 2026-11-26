@@ -15,8 +15,7 @@ class Product extends BaseModel
         $params = [];
 
         if (!empty($filters['category_id'])) {
-            $where[] = "pc.category_id = :category_id";
-            $params['category_id'] = $filters['category_id'];
+            $this->appendCategoryFilter($where, $params, (int)$filters['category_id']);
         }
 
         if (!empty($filters['brand_id'])) {
@@ -25,21 +24,41 @@ class Product extends BaseModel
         }
 
         if (!empty($filters['keyword'])) {
-            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw)";
+            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
             $params['kw'] = '%' . $filters['keyword'] . '%';
+            $params['kw_sku'] = '%' . $filters['keyword'] . '%';
+        }
+
+        if (isset($filters['min_price']) && is_numeric($filters['min_price']) && (float)$filters['min_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_min WHERE pv_min.product_id = p.id AND pv_min.status = 'active' AND COALESCE(pv_min.sale_price, pv_min.price) >= :min_price)";
+            $params['min_price'] = (float)$filters['min_price'];
+        }
+
+        if (isset($filters['max_price']) && is_numeric($filters['max_price']) && (float)$filters['max_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_max WHERE pv_max.product_id = p.id AND pv_max.status = 'active' AND COALESCE(pv_max.sale_price, pv_max.price) <= :max_price)";
+            $params['max_price'] = (float)$filters['max_price'];
+        }
+
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_sz WHERE pv_sz.product_id = p.id AND pv_sz.status = 'active' AND pv_sz.size = :filter_size)";
+            $params['filter_size'] = $filters['size'];
         }
 
         $orderBy = "p.id DESC";
         if (!empty($filters['sort'])) {
             switch ($filters['sort']) {
                 case 'price_asc':
-                    $orderBy = "min_price ASC";
+                    $orderBy = "effective_price ASC, p.id DESC";
                     break;
                 case 'price_desc':
-                    $orderBy = "min_price DESC";
+                    $orderBy = "effective_price DESC, p.id DESC";
                     break;
                 case 'name_asc':
                     $orderBy = "p.name ASC";
+                    break;
+                case 'popular':
+                case 'bestseller':
+                    $orderBy = "total_stock DESC, p.id DESC";
                     break;
                 default:
                     $orderBy = "p.id DESC";
@@ -55,6 +74,7 @@ class Product extends BaseModel
                     MAX(pi.image_url) AS image_url,
                     MIN(pv.price) AS min_price,
                     MIN(pv.sale_price) AS min_sale_price,
+                    MIN(COALESCE(pv.sale_price, pv.price)) AS effective_price,
                     SUM(pv.stock_quantity) AS total_stock
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
@@ -76,8 +96,7 @@ class Product extends BaseModel
         $params = [];
 
         if (!empty($filters['category_id'])) {
-            $where[] = "pc.category_id = :category_id";
-            $params['category_id'] = $filters['category_id'];
+            $this->appendCategoryFilter($where, $params, (int)$filters['category_id']);
         }
 
         if (!empty($filters['brand_id'])) {
@@ -86,8 +105,24 @@ class Product extends BaseModel
         }
 
         if (!empty($filters['keyword'])) {
-            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw)";
+            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
             $params['kw'] = '%' . $filters['keyword'] . '%';
+            $params['kw_sku'] = '%' . $filters['keyword'] . '%';
+        }
+
+        if (isset($filters['min_price']) && is_numeric($filters['min_price']) && (float)$filters['min_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_min WHERE pv_min.product_id = p.id AND pv_min.status = 'active' AND COALESCE(pv_min.sale_price, pv_min.price) >= :min_price)";
+            $params['min_price'] = (float)$filters['min_price'];
+        }
+
+        if (isset($filters['max_price']) && is_numeric($filters['max_price']) && (float)$filters['max_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_max WHERE pv_max.product_id = p.id AND pv_max.status = 'active' AND COALESCE(pv_max.sale_price, pv_max.price) <= :max_price)";
+            $params['max_price'] = (float)$filters['max_price'];
+        }
+
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_sz WHERE pv_sz.product_id = p.id AND pv_sz.status = 'active' AND pv_sz.size = :filter_size)";
+            $params['filter_size'] = $filters['size'];
         }
 
         $whereClause = implode(' AND ', $where);
@@ -101,23 +136,47 @@ class Product extends BaseModel
         return (int)$this->fetchColumn($sql, $params);
     }
 
+    public function getSearchSuggestions(string $keyword, int $limit = 6): array
+    {
+        $sql = "SELECT p.id, p.name, p.slug, b.name AS brand_name,
+                       (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_url,
+                       (SELECT pv.sku FROM product_variants pv WHERE pv.product_id = p.id AND pv.sku LIKE :kw_sku LIMIT 1) AS matched_sku,
+                       (SELECT MIN(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active') AS min_price,
+                       (SELECT MIN(pv.sale_price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active') AS min_sale_price
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE p.status = 'active'
+                  AND (p.name LIKE :kw
+                       OR b.name LIKE :kw
+                       OR EXISTS (SELECT 1 FROM product_variants pv2 WHERE pv2.product_id = p.id AND pv2.sku LIKE :kw_sku2))
+                ORDER BY p.id DESC
+                LIMIT {$limit}";
+
+        return $this->fetchAll($sql, [
+            'kw' => '%' . $keyword . '%',
+            'kw_sku' => '%' . $keyword . '%',
+            'kw_sku2' => '%' . $keyword . '%'
+        ]);
+    }
+
     /**
      * Lấy chi tiết sản phẩm kèm thông tin hãng, ảnh, biến thể
      */
     public function getDetail(int $id): ?array
     {
-        $sql = "SELECT 
-                    p.*,
-                    b.name AS brand_name,
-                    c.id AS category_id,
-                    c.name AS category_name,
-                    pi.image_url,
-                    pi.alt_text AS image_alt_text
+        $sql = "SELECT p.*, b.name AS brand_name,
+                    (SELECT c.id FROM product_categories pc
+                     JOIN categories c ON c.id = pc.category_id
+                     WHERE pc.product_id = p.id ORDER BY c.name LIMIT 1) AS category_id,
+                    (SELECT c.name FROM product_categories pc
+                     JOIN categories c ON c.id = pc.category_id
+                     WHERE pc.product_id = p.id ORDER BY c.name LIMIT 1) AS category_name,
+                    (SELECT pi.image_url FROM product_images pi
+                     WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_url,
+                    (SELECT pi.alt_text FROM product_images pi
+                     WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_alt_text
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
-                LEFT JOIN product_categories pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.id = :id";
 
         $product = $this->fetch($sql, ['id' => $id]);
@@ -170,20 +229,18 @@ class Product extends BaseModel
     {
         $sql = "SELECT 
                     p.id, p.brand_id, p.name, p.slug, p.description, p.status, p.created_at, p.updated_at,
-                    MAX(b.name) AS brand_name,
-                    MAX(c.name) AS category_name,
-                    MAX(pi.image_url) AS image_url,
-                    MIN(pv.price) AS min_price,
-                    MAX(pv.price) AS max_price,
-                    SUM(pv.stock_quantity) AS total_stock,
-                    COUNT(pv.id) AS variant_count
+                    b.name AS brand_name,
+                    (SELECT GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ')
+                     FROM product_categories pc JOIN categories c ON c.id = pc.category_id
+                     WHERE pc.product_id = p.id) AS category_name,
+                    (SELECT pi.image_url FROM product_images pi
+                     WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_url,
+                    COALESCE((SELECT MIN(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active'), 0) AS min_price,
+                    COALESCE((SELECT MAX(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active'), 0) AS max_price,
+                    COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active'), 0) AS total_stock,
+                    (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active') AS variant_count
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
-                LEFT JOIN product_categories pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
-                LEFT JOIN product_variants pv ON p.id = pv.product_id
-                GROUP BY p.id, p.brand_id, p.name, p.slug, p.description, p.status, p.created_at, p.updated_at
                 ORDER BY p.id DESC";
 
         return $this->fetchAll($sql);
@@ -221,34 +278,64 @@ class Product extends BaseModel
         return $productId;
     }
 
-    public function updateProduct(int $id, array $data, ?int $categoryId = null, $imageUrls = null): bool
+    public function addImages(int $productId, array $imagePaths): void
+    {
+        foreach ($imagePaths as $path) {
+            $this->insert('product_images', [
+                'product_id' => $productId,
+                'image_url' => $path,
+                'alt_text' => null,
+                'sort_order' => 0,
+                'is_primary' => 0,
+            ]);
+        }
+
+        if ($imagePaths) {
+            $this->query(
+                'UPDATE product_images SET is_primary = 0 WHERE product_id = :product_id',
+                ['product_id' => $productId]
+            );
+            $this->query(
+                'UPDATE product_images SET is_primary = 1
+                 WHERE product_id = :product_id ORDER BY id DESC LIMIT 1',
+                ['product_id' => $productId]
+            );
+        }
+    }
+
+    public function removeImage(int $productId, int $imageId): ?string
+    {
+        $image = $this->fetch(
+            'SELECT image_url FROM product_images WHERE id = :id AND product_id = :product_id',
+            ['id' => $imageId, 'product_id' => $productId]
+        );
+        if (!$image) {
+            return null;
+        }
+
+        $this->delete('product_images', 'id = :id AND product_id = :product_id', [
+            'id' => $imageId,
+            'product_id' => $productId,
+        ]);
+        $this->query(
+            'UPDATE product_images SET is_primary = 1
+             WHERE product_id = :product_id ORDER BY sort_order, id LIMIT 1',
+            ['product_id' => $productId]
+        );
+
+        return $image['image_url'];
+    }
+
+    public function updateProduct(int $id, array $data, ?int $categoryId = null): bool
     {
         $this->update('products', $data, 'id = :id', ['id' => $id]);
 
+        $this->delete('product_categories', 'product_id = :id', ['id' => $id]);
         if ($categoryId !== null) {
-            $this->delete('product_categories', 'product_id = :id', ['id' => $id]);
             $this->insert('product_categories', [
                 'product_id' => $id,
                 'category_id' => $categoryId
             ]);
-        }
-
-        if (is_string($imageUrls)) {
-            $imageUrls = $imageUrls !== '' ? [$imageUrls] : [];
-        }
-
-        if (is_array($imageUrls)) {
-            $this->delete('product_images', 'product_id = :id', ['id' => $id]);
-
-            foreach (array_values(array_unique($imageUrls)) as $index => $imageUrl) {
-                $this->insert('product_images', [
-                    'product_id' => $id,
-                    'image_url' => $imageUrl,
-                    'alt_text' => $data['name'] ?? 'Giày',
-                    'sort_order' => $index + 1,
-                    'is_primary' => $index === 0 ? 1 : 0
-                ]);
-            }
         }
 
         return true;
@@ -256,9 +343,21 @@ class Product extends BaseModel
 
     public function deleteProduct(int $id): bool
     {
-        $this->delete('product_categories', 'product_id = :id', ['id' => $id]);
-        $this->delete('product_images', 'product_id = :id', ['id' => $id]);
-        $this->delete('product_variants', 'product_id = :id', ['id' => $id]);
-        return $this->delete('products', 'id = :id', ['id' => $id]);
+        $this->update('product_variants', ['status' => 'inactive'], 'product_id = :id', ['id' => $id]);
+        return $this->update('products', ['status' => 'inactive'], 'id = :id', ['id' => $id]);
+    }
+
+    private function appendCategoryFilter(array &$where, array &$params, int $categoryId): void
+    {
+        $categoryIds = (new Category())->getDescendantIds($categoryId, true);
+        $placeholders = [];
+        foreach ($categoryIds as $index => $id) {
+            $key = 'category_' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $id;
+        }
+        if ($placeholders) {
+            $where[] = 'pc.category_id IN (' . implode(', ', $placeholders) . ')';
+        }
     }
 }

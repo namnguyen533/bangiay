@@ -3,10 +3,14 @@
 namespace App\Controllers\Admin;
 
 use App\Core\BaseController;
-use App\Models\Product;
-use App\Models\Category;
+use App\Core\ImageUploader;
 use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\ProductVariant;
+use InvalidArgumentException;
+use PDOException;
+use RuntimeException;
 
 class ProductController extends BaseController
 {
@@ -25,170 +29,316 @@ class ProductController extends BaseController
 
     public function index(): void
     {
-        $products = $this->productModel->getAllForAdmin();
-
+        $this->requireAdmin();
         $this->adminView('products/index', [
             'pageTitle' => 'Quản Lý Sản Phẩm Giày',
-            'products'  => $products,
+            'products' => $this->productModel->getAllForAdmin(),
+            'lowStock' => $this->variantModel->getLowStock(5),
         ]);
     }
 
     public function create(): void
     {
-        $categories = $this->categoryModel->getAllActive();
-        $brands = $this->brandModel->getAllActive();
-
+        $this->requireAdmin();
         $this->adminView('products/create', [
-            'pageTitle'  => 'Thêm Mới Sản Phẩm Giày',
-            'categories' => $categories,
-            'brands'     => $brands,
+            'pageTitle' => 'Thêm Mới Sản Phẩm Giày',
+            'categories' => $this->categoryModel->getFlatList(true),
+            'brands' => $this->brandModel->getAllActive(),
         ]);
     }
 
     public function store(): void
     {
+        $this->requireAdmin();
         $name = trim($_POST['name'] ?? '');
-        $brandId = !empty($_POST['brand_id']) ? (int)$_POST['brand_id'] : null;
-        $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+        $brandId = $this->optionalId($_POST['brand_id'] ?? null);
+        $categoryId = $this->optionalId($_POST['category_id'] ?? null);
         $description = trim($_POST['description'] ?? '');
-        $imageUrl = trim($_POST['image_url'] ?? '');
-        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '');
-        $price = (float)($_POST['price'] ?? 0);
-        $salePrice = !empty($_POST['sale_price']) ? (float)$_POST['sale_price'] : null;
-        $stock = max(0, (int)($_POST['stock_quantity'] ?? 10));
-        $sizes = $_POST['sizes'] ?? ['39', '40', '41', '42'];
-        $colors = $this->parseColors($_POST['colors'] ?? '');
-        if (empty($colors)) {
-            $colors = [trim($_POST['color'] ?? 'Tiêu chuẩn') ?: 'Tiêu chuẩn'];
+        $imageUrl = $this->validatedImageUrl(trim($_POST['image_url'] ?? ''), 'admin-product-create');
+        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '', 'admin-product-create');
+        if ($name === '' || mb_strlen($name) > 200) {
+            $this->fail('Tên sản phẩm không được trống và tối đa 200 ký tự.', 'admin-product-create');
+        }
+        if ($brandId !== null && !$this->brandModel->findById($brandId)) {
+            $this->fail('Thương hiệu không tồn tại.', 'admin-product-create');
+        }
+        if ($categoryId !== null && !$this->categoryModel->findById($categoryId)) {
+            $this->fail('Danh mục không tồn tại.', 'admin-product-create');
         }
 
-        if (empty($name) || $price <= 0) {
-            set_flash('error', 'Tên sản phẩm và giá tiền không được để trống!', 'danger');
-            $this->redirect(route_url('admin-product-create'));
+        $uploadedImages = [];
+        try {
+            $uploadedImages = ImageUploader::storeMany($_FILES['images'] ?? []);
+            $this->productModel->beginTransaction();
+            $slug = $this->makeSlug($name);
+            $productId = $this->productModel->createProduct([
+                'brand_id' => $brandId,
+                'name' => $name,
+                'slug' => $slug,
+                'description' => $description,
+                'status' => 'active',
+            ], $categoryId, array_merge($imageUrl !== '' ? [$imageUrl] : [], $imageUrls));
+            $this->productModel->addImages($productId, $uploadedImages);
+            $this->saveVariants($productId, $this->submittedVariants());
+            $this->productModel->commit();
+        } catch (InvalidArgumentException | RuntimeException $exception) {
+            $this->rollbackIfActive();
+            $this->deleteUploadedFiles($uploadedImages);
+            $this->fail($exception->getMessage(), 'admin-product-create');
+        } catch (PDOException $exception) {
+            $this->rollbackIfActive();
+            $this->deleteUploadedFiles($uploadedImages);
+            error_log('Product creation failed: ' . $exception->getMessage());
+            $this->fail('Không thể lưu sản phẩm. Kiểm tra mã SKU và cấu trúc cơ sở dữ liệu rồi thử lại.', 'admin-product-create');
         }
 
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-')) . '-' . time();
-
-        $productId = $this->productModel->createProduct([
-            'brand_id'    => $brandId,
-            'name'        => $name,
-            'slug'        => $slug,
-            'description' => $description,
-            'status'      => 'active',
-        ], $categoryId, array_merge(
-            $imageUrl ? [$imageUrl] : [],
-            $imageUrls
-        ));
-
-        foreach ($colors as $colorIndex => $color) {
-            foreach ($sizes as $size) {
-                $sku = strtoupper(substr($slug, 0, 4)) . '-' . $size . '-' . ($colorIndex + 1) . '-' . rand(100, 999);
-                $this->variantModel->create([
-                    'product_id'     => $productId,
-                    'sku'            => $sku,
-                    'size'           => $size,
-                    'color'          => $color,
-                    'price'          => $price,
-                    'sale_price'     => $salePrice,
-                    'stock_quantity' => $stock,
-                    'status'         => 'active',
-                ]);
-            }
-        }
-
-        set_flash('success', 'Đã thêm sản phẩm giày mới thành công!', 'success');
+        set_flash('success', 'Đã thêm sản phẩm cùng các biến thể.', 'success');
         $this->redirect(route_url('admin-products'));
     }
 
     public function edit(): void
     {
+        $this->requireAdmin();
         $id = (int)($_GET['id'] ?? 0);
         $product = $this->productModel->getDetail($id);
-
         if (!$product) {
-            set_flash('error', 'Không tìm thấy sản phẩm!', 'danger');
+            set_flash('error', 'Không tìm thấy sản phẩm.', 'danger');
             $this->redirect(route_url('admin-products'));
         }
 
-        $categories = $this->categoryModel->getAllActive();
-        $brands = $this->brandModel->getAllActive();
-
         $this->adminView('products/edit', [
-            'pageTitle'  => 'Chỉnh Sửa Sản Phẩm: ' . $product['name'],
-            'product'    => $product,
-            'categories' => $categories,
-            'brands'     => $brands,
+            'pageTitle' => 'Chỉnh Sửa Sản Phẩm: ' . $product['name'],
+            'product' => $product,
+            'variants' => $this->variantModel->getAllByProductId($id),
+            'categories' => $this->categoryModel->getFlatList(),
+            'brands' => $this->brandModel->getAll(),
         ]);
     }
 
     public function update(): void
     {
+        $this->requireAdmin();
         $id = (int)($_POST['id'] ?? 0);
+        $product = $this->productModel->getDetail($id);
+        if (!$product) {
+            $this->fail('Không tìm thấy sản phẩm.', 'admin-products');
+        }
+
         $name = trim($_POST['name'] ?? '');
-        $brandId = !empty($_POST['brand_id']) ? (int)$_POST['brand_id'] : null;
-        $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+        $brandId = $this->optionalId($_POST['brand_id'] ?? null);
+        $categoryId = $this->optionalId($_POST['category_id'] ?? null);
         $description = trim($_POST['description'] ?? '');
-        $imageUrl = trim($_POST['image_url'] ?? '');
-        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '');
-        $colors = $this->parseColors($_POST['colors'] ?? '');
-        $newColorStock = max(0, (int)($_POST['new_color_stock'] ?? 0));
-        $status = $_POST['status'] ?? 'active';
-
-        if (empty($name)) {
-            set_flash('error', 'Tên sản phẩm không được để trống!', 'danger');
-            $this->redirect(route_url('admin-product-edit', ['id' => $id]));
+        $imageUrl = $this->validatedImageUrl(trim($_POST['image_url'] ?? ''), 'admin-product-edit', ['id' => $id]);
+        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '', 'admin-product-edit', ['id' => $id]);
+        $status = $_POST['status'] ?? '';
+        if ($name === '' || mb_strlen($name) > 200 || !in_array($status, ['active', 'inactive'], true)) {
+            $this->fail('Thông tin sản phẩm không hợp lệ.', 'admin-product-edit', ['id' => $id]);
+        }
+        if ($brandId !== null && !$this->brandModel->findById($brandId)) {
+            $this->fail('Thương hiệu không tồn tại.', 'admin-product-edit', ['id' => $id]);
+        }
+        if ($categoryId !== null && !$this->categoryModel->findById($categoryId)) {
+            $this->fail('Danh mục không tồn tại.', 'admin-product-edit', ['id' => $id]);
         }
 
-        $this->productModel->updateProduct($id, [
-            'brand_id'    => $brandId,
-            'name'        => $name,
-            'description' => $description,
-            'status'      => $status,
-        ], $categoryId, array_merge(
-            $imageUrl ? [$imageUrl] : [],
-            $imageUrls
-        ));
+        $uploadedImages = [];
+        $removedImagePaths = [];
+        try {
+            $uploadedImages = ImageUploader::storeMany($_FILES['images'] ?? []);
+            $this->productModel->beginTransaction();
+            $this->productModel->updateProduct($id, [
+                'brand_id' => $brandId,
+                'name' => $name,
+                'description' => $description,
+                'status' => $status,
+            ], $categoryId);
 
-        if (!empty($colors)) {
-            $this->variantModel->addMissingColors($id, $colors, $newColorStock);
+            foreach (array_unique(array_map('intval', (array)($_POST['remove_image_ids'] ?? []))) as $imageId) {
+                if ($imageId > 0) {
+                    $path = $this->productModel->removeImage($id, $imageId);
+                    if ($path !== null) {
+                        $removedImagePaths[] = $path;
+                    }
+                }
+            }
+            $newImageUrls = array_merge($imageUrl !== '' ? [$imageUrl] : [], $imageUrls);
+            if ($newImageUrls) {
+                $this->productModel->addImages($id, $newImageUrls);
+            }
+            $this->productModel->addImages($id, $uploadedImages);
+            $this->saveVariants($id, $this->submittedVariants());
+            $this->productModel->commit();
+        } catch (InvalidArgumentException | RuntimeException $exception) {
+            $this->rollbackIfActive();
+            $this->deleteUploadedFiles($uploadedImages);
+            $this->fail($exception->getMessage(), 'admin-product-edit', ['id' => $id]);
+        } catch (PDOException $exception) {
+            $this->rollbackIfActive();
+            $this->deleteUploadedFiles($uploadedImages);
+            error_log('Product update failed: ' . $exception->getMessage());
+            $this->fail('Không thể cập nhật sản phẩm. Kiểm tra SKU và dữ liệu rồi thử lại.', 'admin-product-edit', ['id' => $id]);
         }
 
-        set_flash('success', 'Đã cập nhật sản phẩm giày thành công!', 'success');
+        foreach ($removedImagePaths as $path) {
+            ImageUploader::delete($path);
+        }
+        set_flash('success', 'Đã cập nhật thông tin, ảnh và biến thể sản phẩm.', 'success');
         $this->redirect(route_url('admin-products'));
     }
 
     public function delete(): void
     {
-        $id = (int)($_GET['id'] ?? 0);
+        $this->requireAdmin();
+        $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             $this->productModel->deleteProduct($id);
-            set_flash('success', 'Đã xóa sản phẩm thành công!', 'info');
+            set_flash('success', 'Đã ẩn sản phẩm khỏi cửa hàng; lịch sử kho và đơn hàng được giữ lại.', 'info');
         }
-
         $this->redirect(route_url('admin-products'));
     }
 
-    private function parseImageUrls(string $text): array
+    private function parseImageUrls(string $text, string $route, array $params = []): array
     {
         $urls = [];
 
         foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $url) {
             $url = trim($url);
-            if ($url !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
-                $urls[] = $url;
+            if ($url !== '') {
+                $urls[] = $this->validatedImageUrl($url, $route, $params);
             }
         }
 
         return array_values(array_unique($urls));
     }
 
-    private function parseColors(string $text): array
+    private function submittedVariants(): array
     {
-        $colors = preg_split('/[,;\r\n]+/', $text) ?: [];
-        $colors = array_map('trim', $colors);
+        $rows = $_POST['variants'] ?? null;
+        if (!is_array($rows) || !$rows) {
+            throw new InvalidArgumentException('Cần khai báo ít nhất một biến thể.');
+        }
+        return array_values($rows);
+    }
 
-        return array_values(array_unique(array_filter($colors, static function ($color) {
-            return $color !== '';
-        })));
+    private function saveVariants(int $productId, array $rows): void
+    {
+        $existing = [];
+        foreach ($this->variantModel->getAllByProductId($productId) as $variant) {
+            $existing[(int)$variant['id']] = $variant;
+        }
+
+        $submittedIds = [];
+        $uniquePairs = [];
+        $skus = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                throw new InvalidArgumentException('Dữ liệu biến thể không hợp lệ.');
+            }
+            $size = trim((string)($row['size'] ?? ''));
+            $color = trim((string)($row['color'] ?? ''));
+            $sku = trim((string)($row['sku'] ?? ''));
+            $price = filter_var($row['price'] ?? null, FILTER_VALIDATE_FLOAT);
+            $saleInput = trim((string)($row['sale_price'] ?? ''));
+            $salePrice = $saleInput === '' ? null : filter_var($saleInput, FILTER_VALIDATE_FLOAT);
+            $status = $row['status'] ?? 'active';
+            $variantId = (int)($row['id'] ?? 0);
+
+            if ($size === '' || mb_strlen($size) > 20 || $color === '' || mb_strlen($color) > 50 ||
+                $price === false || $price <= 0 || ($saleInput !== '' && ($salePrice === false || $salePrice <= 0 || $salePrice > $price)) ||
+                !in_array($status, ['active', 'inactive'], true)) {
+                throw new InvalidArgumentException('Mỗi biến thể cần có size, màu sắc và giá hợp lệ; giá khuyến mãi không được lớn hơn giá gốc.');
+            }
+            if ($variantId > 0 && !isset($existing[$variantId])) {
+                throw new InvalidArgumentException('Có biến thể không thuộc sản phẩm này.');
+            }
+
+            $pair = mb_strtolower($size . '|' . $color);
+            if (isset($uniquePairs[$pair])) {
+                throw new InvalidArgumentException('Không thể lặp lại cùng một cặp size và màu sắc trong một sản phẩm.');
+            }
+            $uniquePairs[$pair] = true;
+
+            if ($sku === '') {
+                $sku = $this->makeSku($productId, $size, $color);
+            }
+            if (mb_strlen($sku) > 80 || isset($skus[$sku])) {
+                throw new InvalidArgumentException('Mã SKU không hợp lệ hoặc bị trùng trong danh sách biến thể.');
+            }
+            $skus[$sku] = true;
+
+            $data = [
+                'sku' => $sku,
+                'size' => $size,
+                'color' => $color,
+                'price' => $price,
+                'sale_price' => $salePrice,
+                'status' => $status,
+            ];
+            if ($variantId > 0) {
+                $this->variantModel->updateVariant($variantId, $data);
+                $submittedIds[$variantId] = true;
+            } else {
+                $this->variantModel->create($data + [
+                    'product_id' => $productId,
+                    'stock_quantity' => 0,
+                ]);
+            }
+        }
+
+        foreach ($existing as $id => $variant) {
+            if (!isset($submittedIds[$id])) {
+                $this->variantModel->updateVariant($id, ['status' => 'inactive']);
+            }
+        }
+    }
+
+    private function makeSku(int $productId, string $size, string $color): string
+    {
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $color);
+        $colorCode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $ascii ?: $color), 0, 20));
+        return 'SV-' . $productId . '-' . strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $size)) . '-' . ($colorCode ?: 'COLOR') . '-' . strtoupper(bin2hex(random_bytes(3)));
+    }
+
+    private function makeSlug(string $name): string
+    {
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '-', $ascii ?: $name), '-'));
+        return ($slug ?: 'product') . '-' . bin2hex(random_bytes(4));
+    }
+
+    private function optionalId($value): ?int
+    {
+        return $value !== null && $value !== '' ? max(0, (int)$value) : null;
+    }
+
+    private function validatedImageUrl(string $url, string $route, array $params = []): string
+    {
+        if ($url === '') {
+            return '';
+        }
+        if (filter_var($url, FILTER_VALIDATE_URL) === false || !in_array(strtolower((string)parse_url($url, PHP_URL_SCHEME)), ['http', 'https'], true)) {
+            $this->fail('Đường dẫn ảnh phải là URL http hoặc https hợp lệ.', $route, $params);
+        }
+        return $url;
+    }
+
+    private function rollbackIfActive(): void
+    {
+        if ($this->productModel->inTransaction()) {
+            $this->productModel->rollBack();
+        }
+    }
+
+    private function deleteUploadedFiles(array $paths): void
+    {
+        foreach ($paths as $path) {
+            ImageUploader::delete($path);
+        }
+    }
+
+    private function fail(string $message, string $route, array $params = []): void
+    {
+        set_flash('error', $message, 'danger');
+        $this->redirect(route_url($route, $params));
     }
 }
