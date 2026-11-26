@@ -7,6 +7,7 @@ use App\Controllers\ProductController;
 use App\Controllers\CartController;
 use App\Controllers\CheckoutController;
 use App\Controllers\AuthController;
+use App\Controllers\CustomerOrderController;
 use App\Controllers\ReviewController;
 use App\Controllers\Admin\BrandController as AdminBrandController;
 use App\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -43,6 +44,8 @@ class Router
             'order-success'    => (new CheckoutController())->success(),
 
             // Tài khoản
+            'my-orders'    => (new CustomerOrderController())->index(),
+            'order-cancel' => (new CustomerOrderController())->cancel(),
             'login'         => (new AuthController())->login(),
             'post-login'    => (new AuthController())->postLogin(),
             'register'      => (new AuthController())->register(),

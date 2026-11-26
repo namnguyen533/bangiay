@@ -427,6 +427,14 @@ $currentUser = auth();
                                 <span class="fw-semibold text-dark"><?= htmlspecialchars($currentUser['full_name']) ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                                <?php if (!is_admin()): ?>
+                                    <li>
+                                        <a class="dropdown-item py-2" href="<?= route_url('my-orders') ?>">
+                                            <i class="fa-solid fa-box-open me-2 text-secondary"></i> Đơn Hàng Của Tôi
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php endif; ?>
                                 <?php if (is_admin()): ?>
                                     <li>
                                         <a class="dropdown-item py-2 text-danger fw-bold" href="<?= route_url('admin') ?>">

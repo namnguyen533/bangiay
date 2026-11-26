@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Core\BaseModel;
+use DomainException;
 use Exception;
+use Throwable;
 
 class Order extends BaseModel
 {
@@ -57,6 +59,66 @@ class Order extends BaseModel
         return $this->fetchAll($sql);
     }
 
+    public function getAllForUser(int $userId): array
+    {
+        return $this->fetchAll(
+            'SELECT id, order_code, created_at, order_status, payment_status, payment_method,
+                    recipient_name, shipping_address, total_amount, cancellation_reason
+             FROM orders
+             WHERE user_id = :user_id
+             ORDER BY id DESC',
+            ['user_id' => $userId]
+        );
+    }
+
+    public function cancelForUser(int $orderId, int $userId, string $reason): void
+    {
+        $this->beginTransaction();
+
+        try {
+            $order = $this->fetch(
+                'SELECT id, order_status FROM orders WHERE id = :id AND user_id = :user_id FOR UPDATE',
+                ['id' => $orderId, 'user_id' => $userId]
+            );
+            if (!$order) {
+                throw new DomainException('Không tìm thấy đơn hàng của bạn.');
+            }
+            if (!in_array($order['order_status'], ['pending', 'confirmed'], true)) {
+                throw new DomainException('Chỉ có thể hủy đơn đang chờ xử lý hoặc đã xác nhận.');
+            }
+
+            $updated = $this->query(
+                "UPDATE orders
+                 SET order_status = 'cancelled', cancellation_reason = :reason
+                 WHERE id = :id AND user_id = :user_id
+                   AND order_status IN ('pending', 'confirmed')",
+                ['reason' => $reason, 'id' => $orderId, 'user_id' => $userId]
+            );
+            if ($updated->rowCount() !== 1) {
+                throw new DomainException('Trạng thái đơn hàng đã thay đổi. Vui lòng tải lại trang.');
+            }
+
+            $items = $this->fetchAll(
+                'SELECT variant_id, SUM(quantity) AS quantity
+                 FROM order_items
+                 WHERE order_id = :order_id
+                 GROUP BY variant_id',
+                ['order_id' => $orderId]
+            );
+            $variantModel = new ProductVariant();
+            foreach ($items as $item) {
+                $variantModel->increaseStock((int)$item['variant_id'], (int)$item['quantity']);
+            }
+
+            $this->commit();
+        } catch (Throwable $exception) {
+            if ($this->inTransaction()) {
+                $this->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
     public function getDetail(int $orderId): ?array
     {
         $sql = "SELECT o.*, u.full_name AS user_name, u.email AS user_email
@@ -80,7 +142,17 @@ class Order extends BaseModel
 
     public function updateStatus(int $orderId, string $status): bool
     {
-        return $this->update('orders', ['order_status' => $status], 'id = :id', ['id' => $orderId]);
+        $updated = $this->query(
+            "UPDATE orders SET order_status = :status
+             WHERE id = :id AND order_status <> 'cancelled'",
+            ['status' => $status, 'id' => $orderId]
+        );
+        if ($updated->rowCount() > 0) {
+            return true;
+        }
+
+        $order = $this->fetch('SELECT order_status FROM orders WHERE id = :id', ['id' => $orderId]);
+        return $order !== null && $order['order_status'] === $status;
     }
 
     public function hasUserPurchasedProduct(int $userId, int $productId): bool

@@ -51,6 +51,9 @@
         <?php endif; ?>
 
         <div class="d-flex justify-content-center gap-3">
+            <a href="<?= route_url('my-orders') ?>" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold">
+                <i class="fa-solid fa-box-open me-2"></i> Đơn Hàng Của Tôi
+            </a>
             <a href="<?= route_url() ?>" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold">
                 <i class="fa-solid fa-house me-2"></i> Về Trang Chủ
             </a>

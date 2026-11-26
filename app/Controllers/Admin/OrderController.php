@@ -46,8 +46,11 @@ class OrderController extends BaseController
         $status = $_POST['order_status'] ?? 'pending';
 
         if ($id > 0) {
-            $this->orderModel->updateStatus($id, $status);
-            set_flash('success', 'Đã cập nhật trạng thái đơn hàng thành công!', 'success');
+            if ($this->orderModel->updateStatus($id, $status)) {
+                set_flash('success', 'Đã cập nhật trạng thái đơn hàng thành công!', 'success');
+            } else {
+                set_flash('error', 'Không thể cập nhật đơn hàng không tồn tại hoặc đã hủy.', 'danger');
+            }
         }
 
         $this->redirect(route_url('admin-order-detail', ['id' => $id]));

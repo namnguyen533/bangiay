@@ -20,6 +20,9 @@
                 <?php if (!empty($order['note'])): ?>
                     <p class="mb-2"><strong>Ghi chú:</strong> <em class="text-secondary"><?= htmlspecialchars($order['note']) ?></em></p>
                 <?php endif; ?>
+                <?php if (!empty($order['cancellation_reason'])): ?>
+                    <p class="mb-2"><strong>Lý do khách hủy:</strong> <em class="text-secondary"><?= nl2br(htmlspecialchars($order['cancellation_reason'])) ?></em></p>
+                <?php endif; ?>
                 <p class="mb-0"><strong>Phương thức TT:</strong> <span class="badge bg-secondary"><?= strtoupper($order['payment_method']) ?></span></p>
             </div>
 
