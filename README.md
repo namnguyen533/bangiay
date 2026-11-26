@@ -124,6 +124,7 @@ C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe -S localhost:8000
 ## 5. Các Chức Năng Quản Trị
 
 - Danh mục hỗ trợ cây nhiều cấp; thương hiệu và danh mục được dùng trực tiếp trong bộ lọc cửa hàng và biểu mẫu sản phẩm.
+- Thanh tìm kiếm gợi ý cả thương hiệu và giày theo tên hoặc SKU; chọn thương hiệu để lọc danh sách, chọn giày để mở chi tiết, hoặc xem toàn bộ kết quả và tiếp tục lọc theo size/giá.
 - Sản phẩm có thể tải tối đa 8 ảnh JPG/PNG/WebP (5 MB/ảnh), quản lý mô tả và nhiều biến thể size/màu với giá riêng; SKU được tạo tự động nếu để trống.
 - Tồn kho chỉ tăng qua phiếu nhập theo từng SKU. Biến thể có tồn không quá 5 đôi được cảnh báo sắp hết; xóa sản phẩm sẽ chuyển sang ẩn để giữ lịch sử kho/đơn.
 - Khách hàng đăng nhập để gửi một đánh giá cho mỗi sản phẩm. Đánh giá chờ duyệt; quản trị viên có thể hiển thị, ẩn và phản hồi. Đánh giá được duyệt xuất hiện ở trang chi tiết sản phẩm.

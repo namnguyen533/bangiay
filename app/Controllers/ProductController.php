@@ -117,15 +117,25 @@ class ProductController extends BaseController
     {
         $keyword = trim($_GET['q'] ?? '');
         if (mb_strlen($keyword) < 1) {
-            $this->json(['success' => true, 'data' => []]);
+            $this->json(['success' => true, 'brands' => [], 'products' => []]);
         }
 
         $productModel = new Product();
+        $brandModel = new Brand();
         $results = $productModel->getSearchSuggestions($keyword, 6);
+        $brands = $brandModel->getSearchSuggestions($keyword, 4);
 
         $this->json([
             'success' => true,
-            'data' => array_map(function($p) {
+            'brands' => array_map(function($brand) {
+                return [
+                    'id'           => (int)$brand['id'],
+                    'name'         => $brand['name'],
+                    'product_count'=> (int)$brand['product_count'],
+                    'url'          => route_url('products', ['brand_id' => $brand['id']]),
+                ];
+            }, $brands),
+            'products' => array_map(function($p) {
                 return [
                     'id'         => (int)$p['id'],
                     'name'       => $p['name'],

@@ -1,4 +1,14 @@
 <div class="container my-4">
+    <?php
+    $filterParams = [
+        'q' => $filters['keyword'],
+        'category_id' => $filters['category_id'],
+        'brand_id' => $filters['brand_id'],
+        'size' => $filters['size'],
+        'price_range' => $filters['price_range'],
+        'sort' => $filters['sort'],
+    ];
+    ?>
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -107,11 +117,11 @@
                                 <?php endif; ?>
                             </label>
                             <div class="d-flex flex-wrap gap-2">
-                                <a href="<?= route_url('products', array_merge($filters, ['size' => ''])) ?>" class="btn btn-sm <?= empty($filters['size']) ? 'btn-dark' : 'btn-outline-secondary' ?> rounded-pill px-3">
+                                <a href="<?= route_url('products', array_merge($filterParams, ['size' => ''])) ?>" class="btn btn-sm <?= empty($filters['size']) ? 'btn-dark' : 'btn-outline-secondary' ?> rounded-pill px-3">
                                     Tất cả
                                 </a>
                                 <?php foreach ($availableSizes as $sz): ?>
-                                    <a href="<?= route_url('products', array_merge($filters, ['size' => $sz])) ?>" class="btn btn-sm <?= ($filters['size'] === (string)$sz) ? 'btn-danger fw-bold' : 'btn-outline-secondary' ?> rounded-3" style="min-width: 44px;">
+                                    <a href="<?= route_url('products', array_merge($filterParams, ['size' => $sz])) ?>" class="btn btn-sm <?= ($filters['size'] === (string)$sz) ? 'btn-danger fw-bold' : 'btn-outline-secondary' ?> rounded-3" style="min-width: 44px;">
                                         <?= htmlspecialchars($sz) ?>
                                     </a>
                                 <?php endforeach; ?>
@@ -214,19 +224,19 @@
                 <nav class="mt-5">
                     <ul class="pagination justify-content-center">
                         <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : '' ?>">
-                            <a class="page-link rounded-pill me-1 px-3" href="<?= route_url('products', array_merge($filters, ['page' => $currentPage - 1])) ?>">
+                            <a class="page-link rounded-pill me-1 px-3" href="<?= route_url('products', array_merge($filterParams, ['page' => $currentPage - 1])) ?>">
                                 <i class="fa-solid fa-chevron-left me-1"></i> Trước
                             </a>
                         </li>
                         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                             <li class="page-item <?= ($currentPage == $i) ? 'active' : '' ?>">
-                                <a class="page-link rounded-circle mx-1 text-center d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" href="<?= route_url('products', array_merge($filters, ['page' => $i])) ?>">
+                                <a class="page-link rounded-circle mx-1 text-center d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" href="<?= route_url('products', array_merge($filterParams, ['page' => $i])) ?>">
                                     <?= $i ?>
                                 </a>
                             </li>
                         <?php endfor; ?>
                         <li class="page-item <?= ($currentPage >= $totalPages) ? 'disabled' : '' ?>">
-                            <a class="page-link rounded-pill ms-1 px-3" href="<?= route_url('products', array_merge($filters, ['page' => $currentPage + 1])) ?>">
+                            <a class="page-link rounded-pill ms-1 px-3" href="<?= route_url('products', array_merge($filterParams, ['page' => $currentPage + 1])) ?>">
                                 Sau <i class="fa-solid fa-chevron-right ms-1"></i>
                             </a>
                         </li>

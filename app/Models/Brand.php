@@ -12,6 +12,19 @@ class Brand extends BaseModel
         return $this->fetchAll($sql);
     }
 
+    public function getSearchSuggestions(string $keyword, int $limit = 4): array
+    {
+        $sql = "SELECT b.id, b.name, COUNT(p.id) AS product_count
+                FROM brands b
+                JOIN products p ON p.brand_id = b.id AND p.status = 'active'
+                WHERE b.status = 'active' AND b.name LIKE :keyword
+                GROUP BY b.id, b.name
+                ORDER BY b.name ASC
+                LIMIT {$limit}";
+
+        return $this->fetchAll($sql, ['keyword' => '%' . $keyword . '%']);
+    }
+
     public function findById(int $id): ?array
     {
         $sql = "SELECT * FROM brands WHERE id = :id";
