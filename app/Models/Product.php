@@ -24,8 +24,9 @@ class Product extends BaseModel
         }
 
         if (!empty($filters['keyword'])) {
-            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
-            $params['kw'] = '%' . $filters['keyword'] . '%';
+            $where[] = "(p.name LIKE :kw_name OR b.name LIKE :kw_brand OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
+            $params['kw_name'] = '%' . $filters['keyword'] . '%';
+            $params['kw_brand'] = '%' . $filters['keyword'] . '%';
             $params['kw_sku'] = '%' . $filters['keyword'] . '%';
         }
 
@@ -105,8 +106,9 @@ class Product extends BaseModel
         }
 
         if (!empty($filters['keyword'])) {
-            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
-            $params['kw'] = '%' . $filters['keyword'] . '%';
+            $where[] = "(p.name LIKE :kw_name OR b.name LIKE :kw_brand OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
+            $params['kw_name'] = '%' . $filters['keyword'] . '%';
+            $params['kw_brand'] = '%' . $filters['keyword'] . '%';
             $params['kw_sku'] = '%' . $filters['keyword'] . '%';
         }
 
@@ -146,14 +148,15 @@ class Product extends BaseModel
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE p.status = 'active'
-                  AND (p.name LIKE :kw
-                       OR b.name LIKE :kw
+                  AND (p.name LIKE :kw_name
+                       OR b.name LIKE :kw_brand
                        OR EXISTS (SELECT 1 FROM product_variants pv2 WHERE pv2.product_id = p.id AND pv2.sku LIKE :kw_sku2))
                 ORDER BY p.id DESC
                 LIMIT {$limit}";
 
         return $this->fetchAll($sql, [
-            'kw' => '%' . $keyword . '%',
+            'kw_name' => '%' . $keyword . '%',
+            'kw_brand' => '%' . $keyword . '%',
             'kw_sku' => '%' . $keyword . '%',
             'kw_sku2' => '%' . $keyword . '%'
         ]);

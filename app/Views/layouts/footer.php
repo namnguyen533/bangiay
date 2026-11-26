@@ -66,10 +66,20 @@
         if (!searchInput || !suggestBox) return;
 
         let debounceTimer = null;
+        let latestRequest = 0;
         const suggestUrl = '<?= route_url('search-suggest') ?>';
+        const resultsUrl = '<?= route_url('products') ?>';
+        const escapeHtml = value => String(value || '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        })[character]);
 
         searchInput.addEventListener('input', function() {
             const query = this.value.trim();
+            const requestId = ++latestRequest;
             clearTimeout(debounceTimer);
 
             if (query.length < 1) {
@@ -79,44 +89,71 @@
             }
 
             debounceTimer = setTimeout(() => {
-                fetch(`${suggestUrl}&q=${encodeURIComponent(query)}`)
-                    .then(res => res.json())
+                const requestUrl = new URL(suggestUrl, window.location.href);
+                requestUrl.searchParams.set('q', query);
+                fetch(requestUrl)
                     .then(res => {
-                        if (!res.success || !res.data || res.data.length === 0) {
+                        if (!res.ok) throw new Error('Search suggestions request failed');
+                        return res.json();
+                    })
+                    .then(res => {
+                        if (requestId !== latestRequest) return;
+                        if (!res.success) throw new Error('Search suggestions unavailable');
+
+                        const brands = res.brands || [];
+                        const products = res.products || [];
+                        if (brands.length === 0 && products.length === 0) {
                             suggestBox.innerHTML = `
                                 <div class="p-3 text-center text-muted small">
-                                    <i class="fa-solid fa-circle-info me-1"></i> Không tìm thấy giày hoặc mã SKU phù hợp
+                                    <i class="fa-solid fa-circle-info me-1"></i> Không tìm thấy hãng hoặc giày phù hợp
                                 </div>`;
                             suggestBox.classList.remove('d-none');
                             return;
                         }
 
-                        let html = '<div class="small fw-bold text-uppercase text-muted px-2 py-1 mb-1">Gợi ý tìm kiếm</div>';
-                        res.data.forEach(item => {
+                        let html = '';
+                        if (brands.length > 0) {
+                            html += '<div class="small fw-bold text-uppercase text-muted px-2 py-1 mb-1">Thương hiệu</div>';
+                            brands.forEach(brand => {
+                                html += `
+                                    <a href="${escapeHtml(brand.url)}" class="d-flex justify-content-between align-items-center p-2 text-decoration-none text-dark rounded-2 border-bottom border-light">
+                                        <span class="fw-semibold small"><i class="fa-solid fa-tag text-danger me-2"></i>${escapeHtml(brand.name)}</span>
+                                        <span class="text-muted small">${escapeHtml(brand.product_count)} sản phẩm</span>
+                                    </a>`;
+                            });
+                        }
+                        if (products.length > 0) {
+                            html += '<div class="small fw-bold text-uppercase text-muted px-2 py-1 mt-2 mb-1">Giày</div>';
+                            products.forEach(item => {
                             html += `
-                                <a href="${item.url}" class="d-flex align-items-center gap-3 p-2 text-decoration-none text-dark rounded-2 hover-bg-light transition border-bottom border-light">
-                                    <img src="${item.image_url}" alt="${item.name}" class="rounded border" style="width: 46px; height: 46px; object-fit: cover;">
+                                <a href="${escapeHtml(item.url)}" class="d-flex align-items-center gap-3 p-2 text-decoration-none text-dark rounded-2 hover-bg-light transition border-bottom border-light">
+                                    <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" class="rounded border" style="width: 46px; height: 46px; object-fit: cover;">
                                     <div class="flex-grow-1 overflow-hidden">
-                                        <div class="fw-semibold text-truncate small">${item.name}</div>
+                                        <div class="fw-semibold text-truncate small">${escapeHtml(item.name)}</div>
                                         <div class="d-flex align-items-center gap-2 mt-1">
-                                            <span class="text-danger fw-bold small">${item.price}</span>
-                                            ${item.sku ? `<span class="badge bg-secondary" style="font-size: 0.65rem;">SKU: ${item.sku}</span>` : ''}
-                                            ${item.brand_name ? `<span class="text-muted" style="font-size: 0.72rem;">${item.brand_name}</span>` : ''}
+                                            <span class="text-danger fw-bold small">${escapeHtml(item.price)}</span>
+                                            ${item.sku ? `<span class="badge bg-secondary" style="font-size: 0.65rem;">SKU: ${escapeHtml(item.sku)}</span>` : ''}
+                                            ${item.brand_name ? `<span class="text-muted" style="font-size: 0.72rem;">${escapeHtml(item.brand_name)}</span>` : ''}
                                         </div>
                                     </div>
                                 </a>`;
-                        });
+                            });
+                        }
+                        const allResultsUrl = new URL(resultsUrl, window.location.href);
+                        allResultsUrl.searchParams.set('q', query);
                         html += `
                             <div class="pt-2 text-center">
-                                <a href="<?= route_url('products') ?>&q=${encodeURIComponent(query)}" class="small text-danger fw-bold text-decoration-none">
-                                    Xem tất cả kết quả cho "${query}" <i class="fa-solid fa-arrow-right ms-1"></i>
+                                <a href="${escapeHtml(allResultsUrl.toString())}" class="small text-danger fw-bold text-decoration-none">
+                                    Xem tất cả kết quả cho "${escapeHtml(query)}" <i class="fa-solid fa-arrow-right ms-1"></i>
                                 </a>
                             </div>`;
                         suggestBox.innerHTML = html;
                         suggestBox.classList.remove('d-none');
                     })
                     .catch(() => {
-                        suggestBox.classList.add('d-none');
+                        if (requestId !== latestRequest) return;
+                        suggestBox.innerHTML = '<div class="p-3 text-center text-muted small">Không tải được gợi ý. Bạn vẫn có thể nhấn Enter để tìm kiếm.</div>';
+                        suggestBox.classList.remove('d-none');
                     });
             }, 250);
         });

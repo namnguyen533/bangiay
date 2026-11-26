@@ -42,6 +42,28 @@ $currentUser = auth();
         .navbar-brand span {
             color: var(--primary);
         }
+        .navbar-search {
+            position: relative;
+            flex: 1 1 20rem;
+            min-width: 0;
+            max-width: 480px;
+            z-index: 1;
+        }
+        @media (max-width: 1199.98px) {
+            .navbar > .container {
+                flex-wrap: wrap;
+            }
+            .navbar-search {
+                order: 3;
+                flex: 0 0 100%;
+                max-width: none;
+                margin: 0.5rem 0 0 !important;
+            }
+            #navContent {
+                order: 4;
+                flex-basis: 100%;
+            }
+        }
         .nav-link {
             font-weight: 600;
             color: #475569 !important;
@@ -374,30 +396,29 @@ $currentUser = auth();
 <body>
 
     <!-- Header Navigation -->
-    <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm py-3">
+    <nav class="navbar navbar-expand-xl bg-white sticky-top shadow-sm py-3">
         <div class="container">
             <a class="navbar-brand" href="<?= route_url() ?>">
                 <i class="fa-solid fa-shoe-prints me-2 text-danger"></i>Sole<span>Vibe</span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <button class="navbar-toggler order-2" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse" id="navContent">
-                <!-- Search bar -->
-                <form class="d-flex mx-lg-4 my-2 my-lg-0 flex-grow-1 position-relative" action="<?= route_url('products') ?>" method="GET" style="max-width: 480px;">
-                    <input type="hidden" name="act" value="products">
-                    <div class="input-group">
-                        <input id="searchInput" class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm tên giày, hãng, mã SKU..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
-                        <button class="btn btn-primary px-3" type="submit">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </button>
-                    </div>
-                    <!-- Live Search Suggestions Box -->
-                    <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
-                </form>
+            <!-- Search stays outside the collapsible navigation so it cannot collide with page content. -->
+            <form class="navbar-search d-flex mx-xl-4 my-2 my-xl-0" action="<?= route_url('products') ?>" method="GET">
+                <input type="hidden" name="act" value="products">
+                <div class="input-group">
+                    <input id="searchInput" class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm tên giày, hãng, mã SKU..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
+                    <button class="btn btn-primary px-3" type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
+            </form>
 
+            <div class="collapse navbar-collapse" id="navContent">
                 <!-- Navigation links -->
                 <ul class="navbar-nav ms-auto align-items-center gap-1">
                     <li class="nav-item">

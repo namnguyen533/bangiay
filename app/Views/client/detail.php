@@ -8,7 +8,7 @@
         </ol>
     </nav>
 
-    <div class="row g-5">
+    <div class="row g-4 g-lg-5">
         <!-- Cột Gallery Ảnh Sản Phẩm -->
         <div class="col-lg-6">
             <div class="bg-white p-3 rounded-4 border shadow-sm mb-3 text-center position-relative overflow-hidden" style="min-height: 420px; display: flex; align-items: center; justify-content: center;">
@@ -98,7 +98,7 @@
                 </div>
 
                 <!-- Hiển thị Giá Động -->
-                <div class="p-3 bg-light rounded-3 mb-4 d-flex align-items-baseline gap-3">
+                <div class="p-3 bg-light rounded-3 mb-4 d-flex flex-wrap align-items-baseline gap-3">
                     <?php if ($defaultSale && $defaultSale < $defaultPrice): ?>
                         <span id="displayPrice" class="fs-2 fw-black text-danger"><?= format_price($defaultSale) ?></span>
                         <span id="displayOldPrice" class="fs-5 text-decoration-line-through text-secondary"><?= format_price($defaultPrice) ?></span>
