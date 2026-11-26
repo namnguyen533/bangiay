@@ -26,6 +26,12 @@ class CheckoutController extends BaseController
 
     public function index(): void
     {
+        if (!auth()) {
+            $_SESSION['login_return_url'] = route_url('checkout');
+            set_flash('warning', 'Vui lòng đăng nhập để tiến hành đặt hàng!', 'warning');
+            $this->redirect(route_url('login'));
+        }
+
         $items = $this->cart->getItems();
         if (empty($items)) {
             set_flash('error', 'Giỏ hàng của bạn đang trống!', 'warning');
@@ -73,6 +79,12 @@ class CheckoutController extends BaseController
 
     public function process(): void
     {
+        if (!auth()) {
+            $_SESSION['login_return_url'] = route_url('checkout');
+            set_flash('warning', 'Vui lòng đăng nhập để đặt hàng!', 'warning');
+            $this->redirect(route_url('login'));
+        }
+
         $items = $this->cart->getItems();
         if (empty($items)) {
             $this->redirect(route_url('products'));

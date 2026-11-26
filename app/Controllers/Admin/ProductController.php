@@ -55,6 +55,7 @@ class ProductController extends BaseController
         $categoryId = $this->optionalId($_POST['category_id'] ?? null);
         $description = trim($_POST['description'] ?? '');
         $imageUrl = $this->validatedImageUrl(trim($_POST['image_url'] ?? ''), 'admin-product-create');
+        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '', 'admin-product-create');
         if ($name === '' || mb_strlen($name) > 200) {
             $this->fail('Tên sản phẩm không được trống và tối đa 200 ký tự.', 'admin-product-create');
         }
@@ -76,7 +77,7 @@ class ProductController extends BaseController
                 'slug' => $slug,
                 'description' => $description,
                 'status' => 'active',
-            ], $categoryId, $imageUrl ?: null);
+            ], $categoryId, array_merge($imageUrl !== '' ? [$imageUrl] : [], $imageUrls));
             $this->productModel->addImages($productId, $uploadedImages);
             $this->saveVariants($productId, $this->submittedVariants());
             $this->productModel->commit();
@@ -128,6 +129,7 @@ class ProductController extends BaseController
         $categoryId = $this->optionalId($_POST['category_id'] ?? null);
         $description = trim($_POST['description'] ?? '');
         $imageUrl = $this->validatedImageUrl(trim($_POST['image_url'] ?? ''), 'admin-product-edit', ['id' => $id]);
+        $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '', 'admin-product-edit', ['id' => $id]);
         $status = $_POST['status'] ?? '';
         if ($name === '' || mb_strlen($name) > 200 || !in_array($status, ['active', 'inactive'], true)) {
             $this->fail('Thông tin sản phẩm không hợp lệ.', 'admin-product-edit', ['id' => $id]);
@@ -159,8 +161,9 @@ class ProductController extends BaseController
                     }
                 }
             }
-            if ($imageUrl !== '') {
-                $this->productModel->addImages($id, [$imageUrl]);
+            $newImageUrls = array_merge($imageUrl !== '' ? [$imageUrl] : [], $imageUrls);
+            if ($newImageUrls) {
+                $this->productModel->addImages($id, $newImageUrls);
             }
             $this->productModel->addImages($id, $uploadedImages);
             $this->saveVariants($id, $this->submittedVariants());
@@ -192,6 +195,20 @@ class ProductController extends BaseController
             set_flash('success', 'Đã ẩn sản phẩm khỏi cửa hàng; lịch sử kho và đơn hàng được giữ lại.', 'info');
         }
         $this->redirect(route_url('admin-products'));
+    }
+
+    private function parseImageUrls(string $text, string $route, array $params = []): array
+    {
+        $urls = [];
+
+        foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $url) {
+            $url = trim($url);
+            if ($url !== '') {
+                $urls[] = $this->validatedImageUrl($url, $route, $params);
+            }
+        }
+
+        return array_values(array_unique($urls));
     }
 
     private function submittedVariants(): array

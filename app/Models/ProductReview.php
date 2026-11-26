@@ -18,6 +18,31 @@ class ProductReview extends BaseModel
         );
     }
 
+    public function getRatingStats(int $productId): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) AS total_reviews,
+                    COALESCE(AVG(rating), 5) AS avg_rating,
+                    SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS star_5,
+                    SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS star_4,
+                    SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS star_3,
+                    SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS star_2,
+                    SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS star_1
+                FROM product_reviews 
+                WHERE product_id = :product_id AND status = 'visible'";
+        $stats = $this->fetch($sql, ['product_id' => $productId]);
+        if (!$stats) {
+            return [
+                'total_reviews' => 0,
+                'avg_rating'    => 5.0,
+                'star_5' => 0, 'star_4' => 0, 'star_3' => 0, 'star_2' => 0, 'star_1' => 0
+            ];
+        }
+        $stats['total_reviews'] = (int)$stats['total_reviews'];
+        $stats['avg_rating'] = round((float)$stats['avg_rating'], 1);
+        return $stats;
+    }
+
     public function findForUser(int $productId, int $userId): ?array
     {
         return $this->fetch(

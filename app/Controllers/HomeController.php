@@ -15,8 +15,14 @@ class HomeController extends BaseController
         $categoryModel = new Category();
         $brandModel = new Brand();
 
-        // 8 sản phẩm mới nhất
-        $featuredProducts = $productModel->getList([], 8);
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 8;
+        $offset = ($page - 1) * $perPage;
+
+        $featuredProducts = $productModel->getList([], $perPage, $offset);
+        $totalProducts = $productModel->countFiltered([]);
+        $totalPages = (int)ceil($totalProducts / $perPage);
+
         $categories = $categoryModel->getAllActive();
         $brands = $brandModel->getAllActive();
 
@@ -25,6 +31,9 @@ class HomeController extends BaseController
             'featuredProducts' => $featuredProducts,
             'categories'       => $categories,
             'brands'           => $brands,
+            'currentPage'      => $page,
+            'totalPages'       => $totalPages,
+            'totalProducts'    => $totalProducts,
         ]);
     }
 }

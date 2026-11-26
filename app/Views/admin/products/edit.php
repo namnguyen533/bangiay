@@ -70,6 +70,10 @@
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <div class="mt-3">
+                        <label class="form-label fw-bold">Thêm ảnh bổ sung bằng URL</label>
+                        <textarea name="image_urls" class="form-control" rows="3" placeholder="Mỗi URL một dòng"></textarea>
+                    </div>
                 </section>
             </div>
             <div class="col-lg-5">

@@ -48,6 +48,10 @@
                         <label class="form-label fw-bold">Hoặc thêm ảnh bằng URL</label>
                         <input type="url" name="image_url" class="form-control" placeholder="https://...">
                     </div>
+                    <div class="mt-3">
+                        <label class="form-label fw-bold">Ảnh bổ sung bằng URL</label>
+                        <textarea name="image_urls" class="form-control" rows="3" placeholder="Mỗi URL một dòng"></textarea>
+                    </div>
                 </section>
             </div>
             <div class="col-lg-5">

@@ -386,14 +386,16 @@ $currentUser = auth();
 
             <div class="collapse navbar-collapse" id="navContent">
                 <!-- Search bar -->
-                <form class="d-flex mx-lg-4 my-2 my-lg-0 flex-grow-1" action="<?= route_url('products') ?>" method="GET" style="max-width: 480px;">
+                <form class="d-flex mx-lg-4 my-2 my-lg-0 flex-grow-1 position-relative" action="<?= route_url('products') ?>" method="GET" style="max-width: 480px;">
                     <input type="hidden" name="act" value="products">
                     <div class="input-group">
-                        <input class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm kiếm giày Nike, Adidas, Sneaker..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                        <input id="searchInput" class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm tên giày, hãng, mã SKU..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
                         <button class="btn btn-primary px-3" type="submit">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>
+                    <!-- Live Search Suggestions Box -->
+                    <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
                 </form>
 
                 <!-- Navigation links -->

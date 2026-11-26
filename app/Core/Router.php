@@ -32,6 +32,7 @@ class Router
             '', 'home' => (new HomeController())->index(),
             'products' => (new ProductController())->index(),
             'product-detail', 'detail' => (new ProductController())->detail(),
+            'search-suggest' => (new ProductController())->searchSuggest(),
             'review-submit' => (new ReviewController())->submit(),
             
             // Sản phẩm yêu thích (Wishlist)
