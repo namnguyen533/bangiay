@@ -24,21 +24,41 @@ class Product extends BaseModel
         }
 
         if (!empty($filters['keyword'])) {
-            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw)";
+            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
             $params['kw'] = '%' . $filters['keyword'] . '%';
+            $params['kw_sku'] = '%' . $filters['keyword'] . '%';
+        }
+
+        if (isset($filters['min_price']) && is_numeric($filters['min_price']) && (float)$filters['min_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_min WHERE pv_min.product_id = p.id AND pv_min.status = 'active' AND COALESCE(pv_min.sale_price, pv_min.price) >= :min_price)";
+            $params['min_price'] = (float)$filters['min_price'];
+        }
+
+        if (isset($filters['max_price']) && is_numeric($filters['max_price']) && (float)$filters['max_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_max WHERE pv_max.product_id = p.id AND pv_max.status = 'active' AND COALESCE(pv_max.sale_price, pv_max.price) <= :max_price)";
+            $params['max_price'] = (float)$filters['max_price'];
+        }
+
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_sz WHERE pv_sz.product_id = p.id AND pv_sz.status = 'active' AND pv_sz.size = :filter_size)";
+            $params['filter_size'] = $filters['size'];
         }
 
         $orderBy = "p.id DESC";
         if (!empty($filters['sort'])) {
             switch ($filters['sort']) {
                 case 'price_asc':
-                    $orderBy = "min_price ASC";
+                    $orderBy = "effective_price ASC, p.id DESC";
                     break;
                 case 'price_desc':
-                    $orderBy = "min_price DESC";
+                    $orderBy = "effective_price DESC, p.id DESC";
                     break;
                 case 'name_asc':
                     $orderBy = "p.name ASC";
+                    break;
+                case 'popular':
+                case 'bestseller':
+                    $orderBy = "total_stock DESC, p.id DESC";
                     break;
                 default:
                     $orderBy = "p.id DESC";
@@ -54,6 +74,7 @@ class Product extends BaseModel
                     MAX(pi.image_url) AS image_url,
                     MIN(pv.price) AS min_price,
                     MIN(pv.sale_price) AS min_sale_price,
+                    MIN(COALESCE(pv.sale_price, pv.price)) AS effective_price,
                     SUM(pv.stock_quantity) AS total_stock
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
@@ -84,8 +105,24 @@ class Product extends BaseModel
         }
 
         if (!empty($filters['keyword'])) {
-            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw)";
+            $where[] = "(p.name LIKE :kw OR b.name LIKE :kw OR EXISTS (SELECT 1 FROM product_variants pv_sku WHERE pv_sku.product_id = p.id AND pv_sku.sku LIKE :kw_sku))";
             $params['kw'] = '%' . $filters['keyword'] . '%';
+            $params['kw_sku'] = '%' . $filters['keyword'] . '%';
+        }
+
+        if (isset($filters['min_price']) && is_numeric($filters['min_price']) && (float)$filters['min_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_min WHERE pv_min.product_id = p.id AND pv_min.status = 'active' AND COALESCE(pv_min.sale_price, pv_min.price) >= :min_price)";
+            $params['min_price'] = (float)$filters['min_price'];
+        }
+
+        if (isset($filters['max_price']) && is_numeric($filters['max_price']) && (float)$filters['max_price'] > 0) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_max WHERE pv_max.product_id = p.id AND pv_max.status = 'active' AND COALESCE(pv_max.sale_price, pv_max.price) <= :max_price)";
+            $params['max_price'] = (float)$filters['max_price'];
+        }
+
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv_sz WHERE pv_sz.product_id = p.id AND pv_sz.status = 'active' AND pv_sz.size = :filter_size)";
+            $params['filter_size'] = $filters['size'];
         }
 
         $whereClause = implode(' AND ', $where);
@@ -97,6 +134,29 @@ class Product extends BaseModel
                 WHERE {$whereClause}";
 
         return (int)$this->fetchColumn($sql, $params);
+    }
+
+    public function getSearchSuggestions(string $keyword, int $limit = 6): array
+    {
+        $sql = "SELECT p.id, p.name, p.slug, b.name AS brand_name,
+                       (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = 1 ORDER BY pi.sort_order, pi.id LIMIT 1) AS image_url,
+                       (SELECT pv.sku FROM product_variants pv WHERE pv.product_id = p.id AND pv.sku LIKE :kw_sku LIMIT 1) AS matched_sku,
+                       (SELECT MIN(pv.price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active') AS min_price,
+                       (SELECT MIN(pv.sale_price) FROM product_variants pv WHERE pv.product_id = p.id AND pv.status = 'active') AS min_sale_price
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE p.status = 'active'
+                  AND (p.name LIKE :kw 
+                       OR b.name LIKE :kw 
+                       OR EXISTS (SELECT 1 FROM product_variants pv2 WHERE pv2.product_id = p.id AND pv2.sku LIKE :kw_sku2))
+                ORDER BY p.id DESC
+                LIMIT {$limit}";
+
+        return $this->fetchAll($sql, [
+            'kw' => '%' . $keyword . '%',
+            'kw_sku' => '%' . $keyword . '%',
+            'kw_sku2' => '%' . $keyword . '%'
+        ]);
     }
 
     /**

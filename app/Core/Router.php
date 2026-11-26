@@ -28,6 +28,7 @@ class Router
             '', 'home' => (new HomeController())->index(),
             'products' => (new ProductController())->index(),
             'product-detail', 'detail' => (new ProductController())->detail(),
+            'search-suggest' => (new ProductController())->searchSuggest(),
             'review-submit' => (new ReviewController())->submit(),
             
             // Giỏ hàng
