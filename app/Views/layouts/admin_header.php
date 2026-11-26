@@ -374,6 +374,12 @@
             <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'order')) ? 'active' : '' ?>" href="<?= route_url('admin-orders') ?>">
                 <i class="fa-solid fa-receipt"></i> Đơn hàng
             </a>
+            <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'voucher')) ? 'active' : '' ?>" href="<?= route_url('admin-vouchers') ?>">
+                <i class="fa-solid fa-ticket"></i> Quản Lý Voucher
+            </a>
+            <a class="nav-link <?= (isset($_GET['act']) && str_contains($_GET['act'], 'report')) ? 'active' : '' ?>" href="<?= route_url('admin-reports') ?>">
+                <i class="fa-solid fa-chart-pie"></i> Báo Cáo Thống Kê
+            </a>
             
             <hr class="border-secondary mx-3 my-3">
             

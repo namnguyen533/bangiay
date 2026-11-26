@@ -186,10 +186,13 @@
                             </div>
                         </div>
 
-                        <div class="col-sm-8 col-7 pt-4">
-                            <button type="submit" id="btnAddToCart" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm" <?= empty($product['variants']) || $defaultStock <= 0 ? 'disabled' : '' ?>>
+                        <div class="col-sm-8 col-7 pt-4 d-flex gap-2">
+                            <button type="submit" id="btnAddToCart" class="btn btn-primary btn-lg flex-grow-1 rounded-pill fw-bold shadow-sm" <?= empty($product['variants']) || $defaultStock <= 0 ? 'disabled' : '' ?>>
                                 <i class="fa-solid fa-cart-plus me-2"></i> <span id="addToCartText"><?= ($defaultStock <= 0) ? 'Tạm Hết Hàng' : 'Thêm Vào Giỏ Hàng' ?></span>
                             </button>
+                            <a href="<?= route_url('wishlist-toggle', ['product_id' => $product['id']]) ?>" class="btn btn-outline-danger btn-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; flex-shrink: 0;" title="Thêm vào danh sách yêu thích">
+                                <i class="fa-regular fa-heart"></i>
+                            </a>
                         </div>
                     </div>
                 </form>

@@ -10,27 +10,44 @@ use Throwable;
 class Order extends BaseModel
 {
     /**
-     * Tạo đơn hàng mới kèm chi tiết sản phẩm và trừ tồn kho (Dùng Transaction)
+     * Tạo đơn hàng mới kèm chi tiết sản phẩm, trừ tồn kho và ghi nhận voucher (Dùng Transaction)
      */
     public function createOrder(array $orderData, array $cartItems): int
     {
         $this->beginTransaction();
 
         try {
-            // 1. Thêm bản ghi đơn hàng
-            $orderId = $this->insert('orders', $orderData);
-
             $variantModel = new ProductVariant();
 
-            // 2. Thêm từng item vào order_items và trừ kho
+            // 1. Kiểm tra tồn kho trước khi chốt đơn (Sử dụng FOR UPDATE để tránh race-condition)
             foreach ($cartItems as $item) {
-                $lineTotal = $item['price'] * $item['quantity'];
+                $variantId = (int)$item['variant_id'];
+                $quantity = (int)$item['quantity'];
+
+                $sqlCheck = "SELECT stock_quantity, status FROM product_variants WHERE id = :id FOR UPDATE";
+                $variant = $this->fetch($sqlCheck, ['id' => $variantId]);
+
+                if (!$variant || $variant['status'] !== 'active') {
+                    throw new Exception("Sản phẩm '{$item['product_name']}' hiện không khả dụng!");
+                }
+
+                if ((int)$variant['stock_quantity'] < $quantity) {
+                    throw new Exception("Sản phẩm '{$item['product_name']}' (Size {$item['size']}) chỉ còn {$variant['stock_quantity']} đôi trong kho!");
+                }
+            }
+
+            // 2. Thêm bản ghi đơn hàng
+            $orderId = $this->insert('orders', $orderData);
+
+            // 3. Thêm chi tiết đơn hàng và trừ kho
+            foreach ($cartItems as $item) {
+                $lineTotal = (float)$item['price'] * (int)$item['quantity'];
 
                 $this->insert('order_items', [
                     'order_id'     => $orderId,
                     'variant_id'   => $item['variant_id'],
                     'product_name' => $item['product_name'],
-                    'sku'          => $item['sku'] ?? 'SKU-' . $item['variant_id'],
+                    'sku'          => $item['sku'] ?? ('SKU-' . $item['variant_id']),
                     'size'         => $item['size'],
                     'color'        => $item['color'],
                     'unit_price'   => $item['price'],
@@ -39,7 +56,16 @@ class Order extends BaseModel
                 ]);
 
                 // Trừ tồn kho biến thể
-                $variantModel->decreaseStock($item['variant_id'], $item['quantity']);
+                $decreased = $variantModel->decreaseStock((int)$item['variant_id'], (int)$item['quantity']);
+                if (!$decreased) {
+                    throw new Exception("Không thể trừ tồn kho sản phẩm '{$item['product_name']}'!");
+                }
+            }
+
+            // 4. Ghi nhận lượt dùng voucher (nếu có)
+            if (!empty($orderData['voucher_id'])) {
+                $voucherModel = new Voucher();
+                $voucherModel->recordUsage((int)$orderData['voucher_id']);
             }
 
             $this->commit();
@@ -50,80 +76,38 @@ class Order extends BaseModel
         }
     }
 
-    public function getAllForAdmin(): array
+    public function getAllForAdmin(?string $status = null, ?string $keyword = null): array
     {
-        $sql = "SELECT o.*, u.full_name AS user_name, u.email AS user_email
+        $where = [];
+        $params = [];
+
+        if (!empty($status) && $status !== 'all') {
+            $where[] = "o.order_status = :status";
+            $params['status'] = $status;
+        }
+
+        if (!empty($keyword)) {
+            $where[] = "(o.order_code LIKE :kw OR o.recipient_name LIKE :kw OR o.recipient_phone LIKE :kw)";
+            $params['kw'] = '%' . $keyword . '%';
+        }
+
+        $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        $sql = "SELECT o.*, u.full_name AS user_name, u.email AS user_email,
+                       (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) AS total_items
                 FROM orders o
                 LEFT JOIN users u ON o.user_id = u.id
+                {$whereClause}
                 ORDER BY o.id DESC";
-        return $this->fetchAll($sql);
-    }
-
-    public function getAllForUser(int $userId): array
-    {
-        return $this->fetchAll(
-            'SELECT id, order_code, created_at, order_status, payment_status, payment_method,
-                    recipient_name, shipping_address, total_amount, cancellation_reason
-             FROM orders
-             WHERE user_id = :user_id
-             ORDER BY id DESC',
-            ['user_id' => $userId]
-        );
-    }
-
-    public function cancelForUser(int $orderId, int $userId, string $reason): void
-    {
-        $this->beginTransaction();
-
-        try {
-            $order = $this->fetch(
-                'SELECT id, order_status FROM orders WHERE id = :id AND user_id = :user_id FOR UPDATE',
-                ['id' => $orderId, 'user_id' => $userId]
-            );
-            if (!$order) {
-                throw new DomainException('Không tìm thấy đơn hàng của bạn.');
-            }
-            if (!in_array($order['order_status'], ['pending', 'confirmed'], true)) {
-                throw new DomainException('Chỉ có thể hủy đơn đang chờ xử lý hoặc đã xác nhận.');
-            }
-
-            $updated = $this->query(
-                "UPDATE orders
-                 SET order_status = 'cancelled', cancellation_reason = :reason
-                 WHERE id = :id AND user_id = :user_id
-                   AND order_status IN ('pending', 'confirmed')",
-                ['reason' => $reason, 'id' => $orderId, 'user_id' => $userId]
-            );
-            if ($updated->rowCount() !== 1) {
-                throw new DomainException('Trạng thái đơn hàng đã thay đổi. Vui lòng tải lại trang.');
-            }
-
-            $items = $this->fetchAll(
-                'SELECT variant_id, SUM(quantity) AS quantity
-                 FROM order_items
-                 WHERE order_id = :order_id
-                 GROUP BY variant_id',
-                ['order_id' => $orderId]
-            );
-            $variantModel = new ProductVariant();
-            foreach ($items as $item) {
-                $variantModel->increaseStock((int)$item['variant_id'], (int)$item['quantity']);
-            }
-
-            $this->commit();
-        } catch (Throwable $exception) {
-            if ($this->inTransaction()) {
-                $this->rollBack();
-            }
-            throw $exception;
-        }
+        return $this->fetchAll($sql, $params);
     }
 
     public function getDetail(int $orderId): ?array
     {
-        $sql = "SELECT o.*, u.full_name AS user_name, u.email AS user_email
+        $sql = "SELECT o.*, u.full_name AS user_name, u.email AS user_email, v.code AS voucher_code
                 FROM orders o
                 LEFT JOIN users u ON o.user_id = u.id
+                LEFT JOIN vouchers v ON o.voucher_id = v.id
                 WHERE o.id = :id";
         $order = $this->fetch($sql, ['id' => $orderId]);
         if (!$order) {
@@ -140,19 +124,156 @@ class Order extends BaseModel
         return $order;
     }
 
+    public function getOrderByCode(string $orderCode, ?string $phone = null): ?array
+    {
+        $sql = "SELECT id FROM orders WHERE order_code = :code";
+        $params = ['code' => trim($orderCode)];
+        if (!empty($phone)) {
+            $sql .= " AND recipient_phone = :phone";
+            $params['phone'] = trim($phone);
+        }
+        $order = $this->fetch($sql, $params);
+        if (!$order) {
+            return null;
+        }
+        return $this->getDetail((int)$order['id']);
+    }
+
+    public function getUserOrders(int $userId): array
+    {
+        $sql = "SELECT o.*, 
+                       (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) AS total_items,
+                       (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) AS total_quantity
+                FROM orders o
+                WHERE o.user_id = :uid
+                ORDER BY o.id DESC";
+        return $this->fetchAll($sql, ['uid' => $userId]);
+    }
+
+    public function getOrderDetailForUser(int $orderId, int $userId): ?array
+    {
+        $order = $this->getDetail($orderId);
+        if (!$order || (int)$order['user_id'] !== $userId) {
+            return null;
+        }
+        return $order;
+    }
+
     public function updateStatus(int $orderId, string $status): bool
     {
-        $updated = $this->query(
-            "UPDATE orders SET order_status = :status
-             WHERE id = :id AND order_status <> 'cancelled'",
-            ['status' => $status, 'id' => $orderId]
+        $order = $this->fetch(
+            'SELECT order_status, payment_status FROM orders WHERE id = :id',
+            ['id' => $orderId]
         );
+        if (!$order) {
+            return false;
+        }
+
+        if ($status === 'cancelled') {
+            if ($order['order_status'] === 'cancelled') {
+                return true;
+            }
+
+            return $this->cancelOrder($orderId, null, 'Hủy bởi quản trị viên')['success'];
+        }
+
+        if ($order['order_status'] === 'cancelled') {
+            return false;
+        }
+
+        $sql = 'UPDATE orders SET order_status = :status';
+        $params = ['status' => $status, 'id' => $orderId];
+        if ($status === 'completed' && $order['payment_status'] === 'unpaid') {
+            $sql .= ", payment_status = 'paid'";
+        }
+        $updated = $this->query($sql . " WHERE id = :id AND order_status <> 'cancelled'", $params);
         if ($updated->rowCount() > 0) {
             return true;
         }
 
-        $order = $this->fetch('SELECT order_status FROM orders WHERE id = :id', ['id' => $orderId]);
-        return $order !== null && $order['order_status'] === $status;
+        $currentOrder = $this->fetch('SELECT order_status FROM orders WHERE id = :id', ['id' => $orderId]);
+        return $currentOrder !== null && $currentOrder['order_status'] === $status;
+    }
+
+    public function updatePaymentStatus(int $orderId, string $paymentStatus): bool
+    {
+        return $this->update('orders', ['payment_status' => $paymentStatus], 'id = :id', ['id' => $orderId]);
+    }
+
+    /**
+     * Hủy đơn hàng và hoàn lại tồn kho cho các sản phẩm
+     */
+    public function cancelOrder(int $orderId, ?int $userId = null, string $reason = ''): array
+    {
+        $reason = trim($reason);
+        if ($userId !== null && ($reason === '' || mb_strlen($reason) > 500)) {
+            return ['success' => false, 'message' => 'Vui lòng nhập lý do hủy từ 1 đến 500 ký tự.'];
+        }
+
+        $this->beginTransaction();
+        try {
+            $order = $this->fetch(
+                'SELECT user_id, voucher_id, order_status
+                 FROM orders
+                 WHERE id = :id
+                 FOR UPDATE',
+                ['id' => $orderId]
+            );
+            if (!$order) {
+                throw new DomainException('Đơn hàng không tồn tại!');
+            }
+            if ($userId !== null && (int)$order['user_id'] !== $userId) {
+                throw new DomainException('Bạn không có quyền thao tác trên đơn hàng này!');
+            }
+            if (!in_array($order['order_status'], ['pending', 'confirmed'], true)) {
+                throw new DomainException('Chỉ có thể hủy đơn đang chờ xử lý hoặc đã xác nhận.');
+            }
+
+            if ($reason === '') {
+                $reason = 'Hủy bởi quản trị viên';
+            }
+            $updated = $this->query(
+                "UPDATE orders
+                 SET order_status = 'cancelled', cancellation_reason = :reason
+                 WHERE id = :id AND order_status IN ('pending', 'confirmed')",
+                ['reason' => $reason, 'id' => $orderId]
+            );
+            if ($updated->rowCount() !== 1) {
+                throw new DomainException('Trạng thái đơn hàng đã thay đổi. Vui lòng tải lại trang.');
+            }
+
+            $items = $this->fetchAll(
+                'SELECT variant_id, SUM(quantity) AS quantity
+                 FROM order_items
+                 WHERE order_id = :order_id
+                 GROUP BY variant_id',
+                ['order_id' => $orderId]
+            );
+            $variantModel = new ProductVariant();
+            foreach ($items as $item) {
+                if (!empty($item['variant_id'])) {
+                    $variantModel->increaseStock((int)$item['variant_id'], (int)$item['quantity']);
+                }
+            }
+
+            if (!empty($order['voucher_id'])) {
+                (new Voucher())->refundUsage((int)$order['voucher_id']);
+            }
+
+            $this->commit();
+            return ['success' => true, 'message' => 'Đã hủy đơn hàng thành công và hoàn trả số lượng vào kho!'];
+        } catch (DomainException $exception) {
+            if ($this->inTransaction()) {
+                $this->rollBack();
+            }
+            return ['success' => false, 'message' => $exception->getMessage()];
+        } catch (Throwable $exception) {
+            if ($this->inTransaction()) {
+                $this->rollBack();
+            }
+            error_log('Order cancellation failed: ' . $exception->getMessage());
+            return ['success' => false, 'message' => 'Không thể hủy đơn hàng lúc này. Vui lòng thử lại.'];
+        }
     }
 
     public function hasUserPurchasedProduct(int $userId, int $productId): bool
@@ -176,15 +297,101 @@ class Order extends BaseModel
         $totalOrders = (int)$this->fetchColumn("SELECT COUNT(*) FROM orders");
         $totalProducts = (int)$this->fetchColumn("SELECT COUNT(*) FROM products WHERE status = 'active'");
         $totalUsers = (int)$this->fetchColumn("SELECT COUNT(*) FROM users");
+        $pendingOrders = (int)$this->fetchColumn("SELECT COUNT(*) FROM orders WHERE order_status = 'pending'");
 
         $recentOrders = $this->fetchAll("SELECT * FROM orders ORDER BY id DESC LIMIT 5");
 
         return [
-            'revenue'       => $revenue,
+            'revenue'        => $revenue,
             'total_orders'   => $totalOrders,
             'total_products' => $totalProducts,
             'total_users'    => $totalUsers,
+            'pending_orders' => $pendingOrders,
             'recent_orders'  => $recentOrders,
         ];
+    }
+
+    // ==========================================
+    // THỐNG KÊ & BÁO CÁO DOANH THU CHO ADMIN
+    // ==========================================
+
+    /**
+     * Doanh thu theo ngày trong N ngày gần nhất
+     */
+    public function getRevenueByDays(int $days = 15): array
+    {
+        $sql = "SELECT DATE(created_at) AS order_date, 
+                       SUM(CASE WHEN order_status IN ('confirmed','shipping','completed') THEN total_amount ELSE 0 END) AS revenue,
+                       COUNT(*) AS total_orders
+                FROM orders
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY order_date ASC";
+        return $this->fetchAll($sql, ['days' => $days]);
+    }
+
+    /**
+     * Doanh thu theo tháng trong năm
+     */
+    public function getRevenueByMonth(int $year): array
+    {
+        $sql = "SELECT MONTH(created_at) AS month, 
+                       SUM(CASE WHEN order_status IN ('confirmed','shipping','completed') THEN total_amount ELSE 0 END) AS revenue,
+                       COUNT(*) AS total_orders
+                FROM orders
+                WHERE YEAR(created_at) = :year
+                GROUP BY MONTH(created_at)
+                ORDER BY month ASC";
+        return $this->fetchAll($sql, ['year' => $year]);
+    }
+
+    /**
+     * Tỷ lệ đơn hàng theo trạng thái
+     */
+    public function getOrderStatusDistribution(): array
+    {
+        $sql = "SELECT order_status, COUNT(*) AS count 
+                FROM orders 
+                GROUP BY order_status";
+        return $this->fetchAll($sql);
+    }
+
+    /**
+     * Top sản phẩm bán chạy nhất
+     */
+    public function getTopSellingProducts(int $limit = 8): array
+    {
+        $sql = "SELECT oi.product_name, oi.sku, 
+                       MAX(pi.image_url) AS image_url,
+                       SUM(oi.quantity) AS total_sold,
+                       SUM(oi.line_total) AS total_revenue
+                FROM order_items oi
+                JOIN orders o ON oi.order_id = o.id
+                LEFT JOIN product_variants pv ON oi.variant_id = pv.id
+                LEFT JOIN product_images pi ON pv.product_id = pi.product_id AND pi.is_primary = 1
+                WHERE o.order_status IN ('confirmed','shipping','completed')
+                GROUP BY oi.product_name, oi.sku
+                ORDER BY total_sold DESC
+                LIMIT {$limit}";
+        return $this->fetchAll($sql);
+    }
+
+    /**
+     * Doanh số theo danh mục sản phẩm
+     */
+    public function getSalesByCategory(): array
+    {
+        $sql = "SELECT c.name AS category_name, 
+                       SUM(oi.quantity) AS total_sold,
+                       SUM(oi.line_total) AS total_revenue
+                FROM order_items oi
+                JOIN orders o ON oi.order_id = o.id
+                LEFT JOIN product_variants pv ON oi.variant_id = pv.id
+                LEFT JOIN product_categories pc ON pv.product_id = pc.product_id
+                LEFT JOIN categories c ON pc.category_id = c.id
+                WHERE o.order_status IN ('confirmed','shipping','completed') AND c.name IS NOT NULL
+                GROUP BY c.id, c.name
+                ORDER BY total_revenue DESC";
+        return $this->fetchAll($sql);
     }
 }
