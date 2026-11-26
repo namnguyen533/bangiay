@@ -85,7 +85,16 @@
 
             <div class="mb-4">
                 <label class="form-label fw-bold">Mô Tả Sản Phẩm</label>
-                <textarea name="description" class="form-control" rows="4" placeholder="Mô tả chất liệu đế, đệm lót, hướng dẫn phối đồ..."></textarea>
+                <textarea name="description" class="form-control" rows="10">Giới thiệu: [Tên giày] phù hợp với người yêu thích thiết kế gọn gàng, dễ phối và tiện dụng hằng ngày. Phom dáng [kiểu dáng] và màu [màu sắc] tạo vẻ hài hòa, năng động. Hãy thay nội dung trong ngoặc bằng thông tin chính xác trước khi đăng bán.
+
+Thiết kế và chất liệu: Thân giày làm từ [chất liệu thân], kết hợp đế [chất liệu đế] theo thông tin nhà cung cấp. Lớp lót [mô tả nếu đã xác nhận] góp phần tạo cảm giác dễ chịu. Giày có thể phối cùng jeans, quần short hoặc trang phục thường ngày. Chỉ nêu đặc điểm đã kiểm tra.
+
+Cảm giác mang: Sản phẩm hướng đến sự tiện lợi trong sinh hoạt hằng ngày. Độ vừa vặn tùy theo dáng chân, kích cỡ và mục đích sử dụng. Hãy xem bảng size, kiểm tra tồn kho theo màu và chọn cỡ phù hợp. Màu hiển thị có thể khác nhẹ do ánh sáng hoặc màn hình.
+
+Bảo quản: Làm sạch bụi bằng khăn mềm hoặc dụng cụ phù hợp với chất liệu. Tránh ngâm lâu trong nước, dùng chất tẩy mạnh hay phơi dưới nắng gắt. Để giày khô tự nhiên ở nơi thoáng mát và cất tại vị trí sạch sẽ.
+
+Thông tin mua hàng: Sản phẩm gồm các lựa chọn [size] và [màu]; tồn kho được cập nhật trên trang. Hãy thay nội dung trong ngoặc, bỏ phần không áp dụng và bổ sung thông tin đã xác minh. Mô tả trung thực giúp khách hiểu sản phẩm, so sánh lựa chọn và chọn mẫu phù hợp. Vui lòng kiểm tra thông tin thực tế và cập nhật mô tả khi sản phẩm có thay đổi.</textarea>
+                <div class="form-text">Mẫu mô tả khoảng 300 chữ. Hãy thay nội dung trong dấu ngoặc vuông bằng thông tin chính xác và bỏ phần không áp dụng trước khi lưu.</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold">

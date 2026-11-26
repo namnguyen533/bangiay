@@ -12,13 +12,24 @@
         <!-- Cột Ảnh Sản Phẩm -->
         <div class="col-lg-6">
             <div class="bg-white p-3 rounded-4 border shadow-sm mb-3 text-center">
-                <img id="mainProductImg" src="<?= htmlspecialchars($product['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="img-fluid rounded-3" style="max-height: 450px; object-fit: contain; width: 100%;">
+                <img id="mainProductImg" src="<?= htmlspecialchars($product['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($product['image_alt_text'] ?: $product['name']) ?>" class="img-fluid rounded-3" style="max-height: 450px; object-fit: contain; width: 100%;">
+                <?php if (strpos($product['image_alt_text'] ?? '', 'Stock reference:') === 0): ?>
+                    <small class="d-block text-secondary mt-2">Ảnh minh họa, có thể khác mẫu giày thực tế.</small>
+                <?php endif; ?>
             </div>
 
-            <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
+            <?php
+            $galleryImages = array_values(array_filter(
+                $product['images'] ?? [],
+                static fn($img) => (int)($img['is_primary'] ?? 0) !== 1
+            ));
+            ?>
+            <?php if (!empty($galleryImages)): ?>
                 <div class="d-flex gap-2 overflow-auto py-2">
-                    <?php foreach ($product['images'] as $img): ?>
-                        <img src="<?= htmlspecialchars($img['image_url']) ?>" alt="Thumbnail" class="rounded-3 border cursor-pointer thumbnail-img" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;" onclick="document.getElementById('mainProductImg').src = this.src">
+                    <?php foreach ($galleryImages as $img): ?>
+                        <button type="button" class="btn p-0 border rounded-3 thumbnail-button" aria-label="Xem <?= htmlspecialchars($img['alt_text'] ?: $product['name']) ?>" data-image="<?= htmlspecialchars($img['image_url']) ?>" data-alt="<?= htmlspecialchars($img['alt_text'] ?: $product['name']) ?>">
+                            <img src="<?= htmlspecialchars($img['image_url']) ?>" alt="" class="rounded-3" style="width: 80px; height: 80px; object-fit: cover;">
+                        </button>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -232,6 +243,14 @@
 </div>
 
 <script>
+document.querySelectorAll('.thumbnail-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const mainImage = document.getElementById('mainProductImg');
+        mainImage.src = this.dataset.image;
+        mainImage.alt = this.dataset.alt;
+    });
+});
+
 document.querySelectorAll('.variant-radio').forEach(radio => {
     radio.addEventListener('change', function() {
         const price = parseFloat(this.getAttribute('data-price')) || 0;

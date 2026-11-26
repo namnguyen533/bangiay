@@ -111,7 +111,8 @@ class Product extends BaseModel
                     b.name AS brand_name,
                     c.id AS category_id,
                     c.name AS category_name,
-                    pi.image_url
+                    pi.image_url,
+                    pi.alt_text AS image_alt_text
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
@@ -125,7 +126,7 @@ class Product extends BaseModel
         }
 
         // Lấy danh sách ảnh phụ
-        $sqlImages = "SELECT * FROM product_images WHERE product_id = :product_id ORDER BY is_primary DESC, sort_order ASC";
+        $sqlImages = "SELECT * FROM product_images WHERE product_id = :product_id ORDER BY is_primary DESC, sort_order ASC, id ASC";
         $product['images'] = $this->fetchAll($sqlImages, ['product_id' => $id]);
 
         // Lấy các biến thể (size, color, price, sale_price, stock)
