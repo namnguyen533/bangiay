@@ -216,7 +216,7 @@
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="lead fs-6 text-secondary" style="line-height: 1.8;">
-                    <?= nl2br(htmlspecialchars($product['description'] ?? 'Mẫu giày sneaker cao cấp được thiết kế tinh xảo, êm ái cho đôi chân, phong cách trẻ trung và năng động.')) ?>
+                    <?= \App\Core\DescriptionSanitizer::sanitize((string)($product['description'] ?? 'Mẫu giày sneaker cao cấp được thiết kế tinh xảo, êm ái cho đôi chân, phong cách trẻ trung và năng động.')) ?>
                 </div>
             </div>
             <div class="col-lg-4">
