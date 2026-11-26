@@ -36,10 +36,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Mô tả</label>
-                        <textarea name="description" class="form-control" rows="5"></textarea>
-                    </div>
+                    <?php $descriptionEditorContent = ''; include __DIR__ . '/_description_editor.php'; ?>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tải nhiều ảnh (JPG, PNG, WebP; tối đa 8 ảnh, 5 MB/ảnh)</label>
                         <input type="file" name="images[]" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
