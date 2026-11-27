@@ -30,7 +30,7 @@ $items = !empty($items) && is_array($items) ? $items : [];
 
                         <div class="product-img-box">
                             <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
-                                <img src="<?= htmlspecialchars($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="<?= htmlspecialchars($item['name'] ?? 'Giày') ?>" loading="lazy">
+                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="<?= htmlspecialchars($item['name'] ?? 'Giày') ?>" loading="lazy">
                             </a>
                             <?php if (!empty($item['brand_name'])): ?>
                                 <span class="badge-brand"><?= htmlspecialchars($item['brand_name']) ?></span>
