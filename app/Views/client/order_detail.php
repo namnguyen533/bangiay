@@ -173,7 +173,7 @@ $orderId = (int)($order['id'] ?? 0);
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <img src="<?= htmlspecialchars($item['image_url'] ?? 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="Shoe" class="rounded-2 border" style="width: 45px; height: 45px; object-fit: cover;">
+                                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="Shoe" class="rounded-2 border" style="width: 45px; height: 45px; object-fit: cover;">
                                                 <div>
                                                     <div class="fw-bold small text-dark"><?= htmlspecialchars($item['product_name'] ?? 'Giày') ?></div>
                                                     <div class="small text-secondary">Size <?= htmlspecialchars($item['size'] ?? '') ?> | <?= htmlspecialchars($item['color'] ?? '') ?></div>

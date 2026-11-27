@@ -141,7 +141,7 @@ class ProductController extends BaseController
                     'name'       => $p['name'],
                     'brand_name' => $p['brand_name'] ?? '',
                     'sku'        => $p['matched_sku'] ?? '',
-                    'image_url'  => image_src($p['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200'),
+                    'image_url'  => image_src($p['image_url'] ?: 'uploads/products/no-product-image.svg'),
                     'price'      => format_price($p['min_sale_price'] ?: $p['min_price']),
                     'url'        => route_url('product-detail', ['id' => $p['id']]),
                 ];

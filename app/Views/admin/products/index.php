@@ -36,7 +36,7 @@
                         <?php foreach ($products as $p): ?>
                             <tr>
                                 <td>
-                                    <img src="<?= htmlspecialchars(image_src($p['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
+                                    <img src="<?= htmlspecialchars(image_src($p['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark"><?= htmlspecialchars($p['name']) ?></div>

@@ -106,8 +106,9 @@ Nhấp đúp vào file `chay_web.bat` trong thư mục dự án. Trình duyệt 
 3. Import file `database/feature_migration.sql` vào database `bangiay2` một lần để tạo bảng phiếu nhập kho và đánh giá. File migration không xóa hoặc sửa dữ liệu hiện có.
 4. Import file `database/order_cancellation_migration.sql` để thêm cột lưu lý do khách hủy đơn; có thể chạy lại an toàn.
 5. Import file `database/wishlist_migration.sql` để tạo bảng sản phẩm yêu thích nếu database chưa có bảng này; có thể chạy lại an toàn.
-6. Kiểm tra thông tin kết nối trong `config/database.php` (mặc định Laragon: host `127.0.0.1`, port `3306`, user `root`, mật khẩu để trống).
-7. Mở trình duyệt và truy cập:
+6. Import file `database/product_gallery_demo_migration.sql` để làm mới gallery của 8 sản phẩm mẫu bằng các ảnh đã xác minh đúng mẫu và màu; có thể chạy lại an toàn. Sản phẩm chưa có ảnh phù hợp sẽ hiện ảnh chờ cập nhật, không dùng ảnh sneaker ngẫu nhiên.
+7. Kiểm tra thông tin kết nối trong `config/database.php` (mặc định Laragon: host `127.0.0.1`, port `3306`, user `root`, mật khẩu để trống).
+8. Mở trình duyệt và truy cập:
    - Trang người dùng: `http://localhost/webbangiay/bangiay/`
    - Hoặc dùng URL trực tiếp: `http://localhost/webbangiay/bangiay/index.php`
 
