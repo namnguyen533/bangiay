@@ -25,7 +25,7 @@ class OrderController extends BaseController
         $orders = $this->orderModel->getUserOrders((int)$user['id']);
 
         $this->view('my_orders', [
-            'pageTitle' => 'Lịch Sử Mua Hàng - SoleVibe',
+            'pageTitle' => 'Lịch Sử Mua Hàng - Apple Meo Meo',
             'orders'    => $orders,
         ]);
     }
@@ -60,7 +60,7 @@ class OrderController extends BaseController
         }
 
         $this->view('order_detail', [
-            'pageTitle' => 'Chi Tiết Đơn Hàng #' . $order['order_code'] . ' - SoleVibe',
+            'pageTitle' => 'Chi Tiết Đơn Hàng #' . $order['order_code'] . ' - Apple Meo Meo',
             'order'     => $order,
         ]);
     }
@@ -84,7 +84,7 @@ class OrderController extends BaseController
         }
 
         $this->view('track_order', [
-            'pageTitle' => 'Theo Dõi & Tra Cứu Đơn Hàng - SoleVibe',
+            'pageTitle' => 'Theo Dõi & Tra Cứu Đơn Hàng - Apple Meo Meo',
             'order'     => $order,
             'orderCode' => $orderCode,
             'phone'     => $phone,

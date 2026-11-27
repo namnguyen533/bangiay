@@ -9,7 +9,7 @@ $currentUser = auth();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'SoleVibe Sneaker Store') ?></title>
+    <title><?= htmlspecialchars($pageTitle ?? 'Apple Meo Meo Shoes Store') ?></title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
@@ -33,7 +33,36 @@ $currentUser = auth();
             flex-direction: column;
             min-height: 100vh;
         }
+        .site-header {
+            z-index: 1030;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .utility-bar {
+            min-height: 34px;
+            background: #f5f5f5;
+            color: #111827;
+            font-size: 0.72rem;
+        }
+        .utility-bar a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .utility-bar a:hover {
+            text-decoration: underline;
+        }
+        .utility-divider {
+            margin: 0 0.75rem;
+            color: #9ca3af;
+        }
+        .navbar {
+            min-height: 64px;
+        }
         .navbar-brand {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            margin-right: 2rem;
             font-weight: 800;
             font-size: 1.5rem;
             color: #0f172a !important;
@@ -42,26 +71,105 @@ $currentUser = auth();
         .navbar-brand span {
             color: var(--primary);
         }
+        .main-nav-links {
+            gap: 0.25rem;
+        }
+        .main-nav-links .nav-link {
+            padding: 1.25rem 0.8rem;
+            color: #111827 !important;
+            font-size: 0.9rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .main-nav-links .nav-link:hover,
+        .main-nav-links .nav-link.active {
+            color: var(--primary) !important;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-shrink: 0;
+        }
         .navbar-search {
             position: relative;
-            flex: 1 1 20rem;
-            min-width: 0;
-            max-width: 480px;
+            width: 170px;
             z-index: 1;
+        }
+        .navbar-search .input-group {
+            overflow: hidden;
+            border-radius: 999px;
+            background: #f3f4f6;
+        }
+        .navbar-search .form-control {
+            min-width: 0;
+            padding: 0.55rem 0.85rem;
+            background: transparent !important;
+            font-size: 0.88rem;
+        }
+        .navbar-search .form-control:focus {
+            box-shadow: none;
+        }
+        .navbar-search .btn {
+            padding: 0 0.85rem;
+            color: #111827;
+            background: transparent;
+            border: 0;
+        }
+        .header-icon-link {
+            position: relative;
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            color: #111827;
+            border-radius: 50%;
+            font-size: 1.15rem;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .header-icon-link:hover {
+            color: var(--primary);
+            background: #f3f4f6;
+        }
+        .header-icon-link .badge {
+            top: 0;
+            right: 0;
+            font-size: 0.62rem;
         }
         @media (max-width: 1199.98px) {
             .navbar > .container {
                 flex-wrap: wrap;
             }
-            .navbar-search {
-                order: 3;
+            .navbar-brand {
+                margin-right: auto;
+            }
+            .navbar-toggler {
+                order: 1;
+                margin-left: 0.5rem;
+            }
+            .header-actions {
+                order: 2;
                 flex: 0 0 100%;
+                padding: 0.2rem 0 0.75rem;
+            }
+            .navbar-search {
+                flex: 1 1 auto;
+                width: auto;
                 max-width: none;
-                margin: 0.5rem 0 0 !important;
             }
             #navContent {
-                order: 4;
+                order: 3;
                 flex-basis: 100%;
+            }
+            .main-nav-links .nav-link {
+                padding: 0.75rem 0;
+            }
+        }
+        @media (min-width: 1200px) {
+            #navContent {
+                justify-content: center;
             }
         }
         .nav-link {
@@ -192,13 +300,19 @@ $currentUser = auth();
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
+            width: 64px;
+            height: 64px;
             margin-bottom: 2rem;
             color: #fff;
-            background: var(--primary);
-            border-radius: 15px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
             font-size: 1.2rem;
+        }
+        .auth-brand-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .auth-showcase h1 {
             max-width: 390px;
@@ -396,116 +510,102 @@ $currentUser = auth();
 <body>
 
     <!-- Header Navigation -->
-    <nav class="navbar navbar-expand-xl bg-white sticky-top shadow-sm py-3">
-        <div class="container">
-            <a class="navbar-brand" href="<?= route_url() ?>">
-                <i class="fa-solid fa-shoe-prints me-2 text-danger"></i>Sole<span>Vibe</span>
-            </a>
-            
-            <button class="navbar-toggler order-2" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Search stays outside the collapsible navigation so it cannot collide with page content. -->
-            <form class="navbar-search d-flex mx-xl-4 my-2 my-xl-0" action="<?= route_url('products') ?>" method="GET">
-                <input type="hidden" name="act" value="products">
-                <div class="input-group">
-                    <input id="searchInput" class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm tên giày, hãng, mã SKU..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
-                    <button class="btn btn-primary px-3" type="submit">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                </div>
-                <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
-            </form>
-
-            <div class="collapse navbar-collapse" id="navContent">
-                <!-- Navigation links -->
-                <ul class="navbar-nav ms-auto align-items-center gap-1">
-                    <li class="nav-item">
-                        <a class="nav-link px-3" href="<?= route_url() ?>">Trang Chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3" href="<?= route_url('products') ?>">Tất Cả Giày</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3" href="<?= route_url('track-order') ?>">
-                            <i class="fa-solid fa-truck-fast me-1 text-danger"></i> Tra Cứu Đơn
+    <header class="site-header sticky-top">
+        <div class="utility-bar">
+            <div class="container d-flex justify-content-end align-items-center">
+                <a href="<?= route_url('track-order') ?>">Tra cứu đơn hàng</a>
+                <span class="utility-divider">|</span>
+                <?php if ($currentUser): ?>
+                    <div class="dropdown">
+                        <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <?= htmlspecialchars($currentUser['full_name']) ?>
                         </a>
-                    </li>
-
-                    <!-- Wishlist button -->
-                    <?php $wishCount = wishlist_count(); ?>
-                    <li class="nav-item ms-lg-1">
-                        <a href="<?= route_url('wishlist') ?>" class="btn btn-outline-danger position-relative rounded-pill px-3 py-2" title="Sản phẩm yêu thích">
-                            <i class="fa-solid fa-heart me-1"></i> Yêu Thích
-                            <?php if ($wishCount > 0): ?>
-                                <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill">
-                                    <?= $wishCount ?>
-                                </span>
-                            <?php endif; ?>
-                        </a>
-                    </li>
-
-                    <!-- Cart button -->
-                    <li class="nav-item ms-lg-1">
-                        <a href="<?= route_url('cart') ?>" class="btn btn-outline-dark position-relative rounded-pill px-3 py-2">
-                            <i class="fa-solid fa-cart-shopping me-1"></i> Giỏ Hàng
-                            <?php if ($cartCount > 0): ?>
-                                <span class="position-absolute top-0 start-100 translate-middle badge bg-danger cart-badge">
-                                    <?= $cartCount ?>
-                                </span>
-                            <?php endif; ?>
-                        </a>
-                    </li>
-
-                    <!-- User Account -->
-                    <?php if ($currentUser): ?>
-                        <li class="nav-item dropdown ms-lg-2">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fa-solid fa-circle-user fs-4 text-primary"></i>
-                                <span class="fw-semibold text-dark"><?= htmlspecialchars($currentUser['full_name']) ?></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                                <?php if (!is_admin()): ?>
-                                    <li>
-                                        <a class="dropdown-item py-2" href="<?= route_url('my-orders') ?>">
-                                            <i class="fa-solid fa-box-open me-2 text-secondary"></i> Đơn Hàng Của Tôi
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                <?php endif; ?>
-                                <?php if (is_admin()): ?>
-                                    <li>
-                                        <a class="dropdown-item py-2 text-danger fw-bold" href="<?= route_url('admin') ?>">
-                                            <i class="fa-solid fa-gauge-high me-2"></i> Trang Quản Trị
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                <?php endif; ?>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                            <?php if (!is_admin()): ?>
                                 <li>
-                                    <a class="dropdown-item py-2" href="<?= route_url('wishlist') ?>">
-                                        <i class="fa-solid fa-heart me-2 text-danger"></i> Sản Phẩm Yêu Thích
+                                    <a class="dropdown-item py-2" href="<?= route_url('my-orders') ?>">
+                                        <i class="fa-solid fa-box-open me-2 text-secondary"></i> Đơn Hàng Của Tôi
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
+                            <?php endif; ?>
+                            <?php if (is_admin()): ?>
                                 <li>
-                                    <a class="dropdown-item py-2" href="<?= route_url('logout') ?>">
-                                        <i class="fa-solid fa-right-from-bracket me-2 text-secondary"></i> Đăng Xuất
+                                    <a class="dropdown-item py-2 text-danger fw-bold" href="<?= route_url('admin') ?>">
+                                        <i class="fa-solid fa-gauge-high me-2"></i> Trang Quản Trị
                                     </a>
                                 </li>
-                            </ul>
-                        </li>
-                    <?php else: ?>
-                        <li class="nav-item ms-lg-2">
-                            <a href="<?= route_url('login') ?>" class="btn btn-primary rounded-pill px-4 py-2">
-                                <i class="fa-solid fa-user me-1"></i> Đăng Nhập
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
+                                <li><hr class="dropdown-divider"></li>
+                            <?php endif; ?>
+                            <li>
+                                <a class="dropdown-item py-2" href="<?= route_url('wishlist') ?>">
+                                    <i class="fa-solid fa-heart me-2 text-danger"></i> Sản Phẩm Yêu Thích
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item py-2" href="<?= route_url('logout') ?>">
+                                    <i class="fa-solid fa-right-from-bracket me-2 text-secondary"></i> Đăng Xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <a href="<?= route_url('login') ?>">Đăng nhập</a>
+                <?php endif; ?>
             </div>
         </div>
-    </nav>
+        <nav class="navbar navbar-expand-xl bg-white py-0">
+            <div class="container">
+                <a class="navbar-brand" href="<?= route_url() ?>">
+                    <img src="<?= htmlspecialchars(asset('images/apple-meo-meo-logo.png')) ?>" alt="Apple Meo Meo Shoes Store" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; margin-right: 10px;">
+                    <span style="color: #0f172a;">Apple</span><span> Meo Meo</span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent" aria-controls="navContent" aria-expanded="false" aria-label="Mở menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navContent">
+                    <ul class="navbar-nav main-nav-links">
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= route_url() ?>">Trang Chủ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= route_url('products') ?>">Tất Cả Giày</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="header-actions">
+                    <form class="navbar-search" action="<?= route_url('products') ?>" method="GET">
+                        <input type="hidden" name="act" value="products">
+                        <div class="input-group">
+                            <input id="searchInput" class="form-control border-0" type="search" name="q" placeholder="Tìm kiếm" aria-label="Tìm kiếm sản phẩm" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
+                            <button class="btn" type="submit" aria-label="Tìm kiếm">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
+                    </form>
+
+                    <?php $wishCount = wishlist_count(); ?>
+                    <a href="<?= route_url('wishlist') ?>" class="header-icon-link" title="Sản phẩm yêu thích" aria-label="Sản phẩm yêu thích">
+                        <i class="fa-regular fa-heart"></i>
+                        <?php if ($wishCount > 0): ?>
+                            <span class="position-absolute translate-middle badge bg-danger rounded-pill"><?= $wishCount ?></span>
+                        <?php endif; ?>
+                    </a>
+                    <a href="<?= route_url('cart') ?>" class="header-icon-link" title="Giỏ hàng" aria-label="Giỏ hàng">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <?php if ($cartCount > 0): ?>
+                            <span class="position-absolute translate-middle badge bg-danger rounded-pill"><?= $cartCount ?></span>
+                        <?php endif; ?>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
 
     <!-- Flash Messages Container -->
     <div class="container mt-3">

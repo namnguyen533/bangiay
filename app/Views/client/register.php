@@ -1,11 +1,11 @@
 <main class="auth-page container">
     <div class="auth-card">
-        <section class="auth-showcase" aria-label="Giới thiệu SoleVibe">
+        <section class="auth-showcase" aria-label="Giới thiệu Apple Meo Meo">
             <div>
-                <span class="auth-brand-mark"><i class="fa-solid fa-shoe-prints"></i></span>
+                <span class="auth-brand-mark"><img src="<?= htmlspecialchars(asset('images/apple-meo-meo-logo.png')) ?>" alt="Apple Meo Meo Shoes Store"></span>
                 <p class="auth-eyebrow text-white-50">Gia nhập cộng đồng</p>
                 <h1>Mỗi đôi giày là một câu chuyện của riêng bạn.</h1>
-                <p class="auth-showcase-copy">Tạo tài khoản SoleVibe để lưu lại hành trình phong cách và khám phá những ưu đãi dành riêng cho bạn.</p>
+                <p class="auth-showcase-copy">Tạo tài khoản Apple Meo Meo để lưu lại hành trình phong cách và khám phá những ưu đãi dành riêng cho bạn.</p>
                 <ul class="auth-benefits">
                     <li><i class="fa-solid fa-tags"></i><span>Ưu đãi thành viên</span></li>
                     <li><i class="fa-solid fa-heart"></i><span>Khám phá phong cách</span></li>
@@ -19,7 +19,7 @@
             <div class="auth-form-content">
                 <p class="auth-eyebrow">Bắt đầu ngay hôm nay</p>
                 <h2 class="auth-form-title">Tạo tài khoản</h2>
-                <p class="auth-form-subtitle">Điền thông tin bên dưới để trở thành thành viên SoleVibe.</p>
+                <p class="auth-form-subtitle">Điền thông tin bên dưới để trở thành thành viên Apple Meo Meo.</p>
 
                 <form action="<?= route_url('post-register') ?>" method="POST" class="auth-form">
                     <div class="mb-3">

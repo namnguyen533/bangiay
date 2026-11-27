@@ -58,10 +58,10 @@
     <!-- Header Hóa Đơn -->
     <div class="row align-items-center mb-4">
         <div class="col-7">
-            <h3 class="fw-bold mb-1" style="font-family: sans-serif; color: #ff4757;">SOLEVIBE SNEAKER</h3>
+            <h3 class="fw-bold mb-1" style="font-family: sans-serif; color: #ff4757;">APPLE MEO MEO SNEAKER</h3>
             <p class="small mb-1">Cửa hàng giày Sneaker chính hãng & Phong cách</p>
             <p class="small mb-1">Địa chỉ: Số 123 Đường Cầu Giấy, Q. Cầu Giấy, Hà Nội</p>
-            <p class="small mb-0">Hotline: 090.123.4567 | Website: solevibe.vn</p>
+            <p class="small mb-0">Hotline: 090.123.4567 | Website: applemeomeo.vn</p>
         </div>
         <div class="col-5 text-end">
             <div class="invoice-title">HÓA ĐƠN BÁN HÀNG</div>
@@ -155,14 +155,14 @@
             <div style="height: 70px;"></div>
         </div>
         <div class="col-6">
-            <div class="fw-bold">ĐẠI DIỆN SOLEVIBE STORE</div>
+            <div class="fw-bold">ĐẠI DIỆN APPLE MEO MEO STORE</div>
             <div class="small text-muted">(Ký, đóng dấu)</div>
             <div style="height: 70px;"></div>
         </div>
     </div>
 
     <div class="text-center text-muted small mt-4 border-top pt-3">
-        Cảm ơn quý khách đã tin tưởng và đồng hành cùng SoleVibe Sneaker Store! Đổi trả size miễn phí trong 30 ngày.
+        Cảm ơn quý khách đã tin tưởng và đồng hành cùng Apple Meo Meo Shoes Store! Đổi trả size miễn phí trong 30 ngày.
     </div>
 </div>
 

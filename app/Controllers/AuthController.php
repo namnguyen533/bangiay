@@ -25,7 +25,7 @@ class AuthController extends BaseController
         }
 
         $this->view('login', [
-            'pageTitle' => 'Đăng Nhập Tài Khoản - SoleVibe',
+            'pageTitle' => 'Đăng Nhập Tài Khoản - Apple Meo Meo',
         ]);
     }
 
@@ -78,7 +78,7 @@ class AuthController extends BaseController
         }
 
         $this->view('register', [
-            'pageTitle' => 'Đăng Ký Tài Khoản Mới - SoleVibe',
+            'pageTitle' => 'Đăng Ký Tài Khoản Mới - Apple Meo Meo',
         ]);
     }
 

@@ -63,7 +63,7 @@ class ProductController extends BaseController
         $availableSizes = $variantModel->getAvailableSizes();
 
         $this->view('products', [
-            'pageTitle'      => 'Danh Sách Giày - SoleVibe',
+            'pageTitle'      => 'Danh Sách Giày - Apple Meo Meo',
             'products'       => $products,
             'categories'     => $categories,
             'brands'         => $brands,
@@ -103,7 +103,7 @@ class ProductController extends BaseController
         }
 
         $this->view('detail', [
-            'pageTitle'       => $product['name'] . ' - SoleVibe',
+            'pageTitle'       => $product['name'] . ' - Apple Meo Meo',
             'product'         => $product,
             'relatedProducts' => $relatedProducts,
             'reviews'         => $reviews,
