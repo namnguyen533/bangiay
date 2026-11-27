@@ -35,8 +35,13 @@
                 <p class="mb-2"><strong>Phương thức TT:</strong> <?= payment_method_label($order['payment_method']) ?></p>
                 <p class="mb-0">
                     <strong>Trạng thái TT:</strong>
-                    <span class="badge <?= ($order['payment_status'] === 'paid') ? 'bg-success' : 'bg-warning text-dark' ?>">
-                        <?= ($order['payment_status'] === 'paid') ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
+                    <span class="badge <?= match ($order['payment_status']) {
+                        'paid' => 'bg-success',
+                        'failed' => 'bg-danger',
+                        'refunded', 'partially_refunded' => 'bg-secondary',
+                        default => 'bg-warning text-dark',
+                    } ?>">
+                        <?= payment_status_label($order['payment_status']) ?>
                     </span>
                 </p>
             </div>

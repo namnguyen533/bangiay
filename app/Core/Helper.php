@@ -158,6 +158,21 @@ if (!function_exists('payment_method_label')) {
     }
 }
 
+if (!function_exists('payment_status_label')) {
+    function payment_status_label(?string $status): string
+    {
+        $statuses = [
+            'unpaid'             => 'Chưa thanh toán',
+            'pending'            => 'Đang chờ xử lý',
+            'paid'               => 'Đã thanh toán',
+            'failed'             => 'Thanh toán thất bại',
+            'refunded'           => 'Đã hoàn tiền',
+            'partially_refunded' => 'Hoàn tiền một phần',
+        ];
+        return $statuses[$status] ?? 'Không xác định';
+    }
+}
+
 if (!function_exists('wishlist_count')) {
     function wishlist_count(): int
     {
