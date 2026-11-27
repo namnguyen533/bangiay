@@ -73,7 +73,7 @@ $orders = !empty($orders) && is_array($orders) ? $orders : [];
                 <i class="fa-solid fa-box-open"></i>
             </div>
             <h4 class="fw-bold">Bạn chưa có đơn hàng nào!</h4>
-            <p class="text-secondary small mb-4">Hãy bắt đầu lựa chọn những đôi giày thể thao năng động và chất lượng tại SoleVibe.</p>
+            <p class="text-secondary small mb-4">Hãy bắt đầu lựa chọn những đôi giày thể thao năng động và chất lượng tại Apple Meo Meo.</p>
             <a href="<?= route_url('products') ?>" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold">
                 Bắt Đầu Mua Sắm
             </a>

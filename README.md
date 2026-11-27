@@ -1,4 +1,4 @@
-# SoleVibe - Website Bán Giày Sneaker Theo Mô Hình MVC
+# Apple Meo Meo - Website Bán Giày Sneaker Theo Mô Hình MVC
 
 Hệ thống website bán giày trực tuyến được xây dựng hoàn chỉnh theo kiến trúc chuẩn **PHP MVC (Model - View - Controller)** thuần, hướng đối tượng (OOP), sử dụng PDO và cơ sở dữ liệu MySQL.
 
@@ -138,5 +138,5 @@ C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe -S localhost:8000
 
 | Vai trò | Email | Mật khẩu | Chức năng |
 |---|---|---|---|
-| **Quản trị viên (Admin)** | `admin@solemate.vn` | `123456` | Toàn quyền quản trị Dashboard, Giày, Đơn hàng, Danh mục |
+| **Quản trị viên (Admin)** | `admin@applemeomeo.vn` | `123456` | Toàn quyền quản trị Dashboard, Giày, Đơn hàng, Danh mục |
 | **Khách hàng (Customer)** | `phong@gmail.com` | `123456` | Mua hàng, chọn size, xem giỏ, thanh toán đơn |

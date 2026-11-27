@@ -9,7 +9,7 @@ $currentUser = auth();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'SoleVibe Sneaker Store') ?></title>
+    <title><?= htmlspecialchars($pageTitle ?? 'Apple Meo Meo Shoes Store') ?></title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
@@ -59,6 +59,8 @@ $currentUser = auth();
             min-height: 64px;
         }
         .navbar-brand {
+            display: flex;
+            align-items: center;
             flex-shrink: 0;
             margin-right: 2rem;
             font-weight: 800;
@@ -298,13 +300,19 @@ $currentUser = auth();
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
+            width: 64px;
+            height: 64px;
             margin-bottom: 2rem;
             color: #fff;
-            background: var(--primary);
-            border-radius: 15px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
             font-size: 1.2rem;
+        }
+        .auth-brand-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .auth-showcase h1 {
             max-width: 390px;
@@ -550,7 +558,8 @@ $currentUser = auth();
         <nav class="navbar navbar-expand-xl bg-white py-0">
             <div class="container">
                 <a class="navbar-brand" href="<?= route_url() ?>">
-                    <i class="fa-solid fa-shoe-prints me-2 text-danger"></i>Sole<span>Vibe</span>
+                    <img src="<?= htmlspecialchars(asset('images/apple-meo-meo-logo.png')) ?>" alt="Apple Meo Meo Shoes Store" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; margin-right: 10px;">
+                    <span style="color: #0f172a;">Apple</span><span> Meo Meo</span>
                 </a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent" aria-controls="navContent" aria-expanded="false" aria-label="Mở menu">

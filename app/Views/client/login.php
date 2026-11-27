@@ -1,9 +1,9 @@
 <main class="auth-page container">
     <div class="auth-card">
-        <section class="auth-showcase" aria-label="Giới thiệu SoleVibe">
+        <section class="auth-showcase" aria-label="Giới thiệu Apple Meo Meo">
             <div>
-                <span class="auth-brand-mark"><i class="fa-solid fa-shoe-prints"></i></span>
-                <p class="auth-eyebrow text-white-50">SoleVibe Sneaker Store</p>
+                <span class="auth-brand-mark"><img src="<?= htmlspecialchars(asset('images/apple-meo-meo-logo.png')) ?>" alt="Apple Meo Meo Shoes Store"></span>
+                <p class="auth-eyebrow text-white-50">Apple Meo Meo Shoes Store</p>
                 <h1>Phong cách bắt đầu từ bước chân của bạn.</h1>
                 <p class="auth-showcase-copy">Đăng nhập để tiếp tục khám phá những đôi sneaker dành riêng cho cá tính của bạn.</p>
                 <ul class="auth-benefits">
@@ -41,8 +41,8 @@
 
                 <div class="auth-demo small">
                     <div class="fw-bold text-dark mb-1">Tài khoản Admin</div>
-                    <div class="text-secondary mb-2"><code>admin@solemate.vn</code> / <code>123456</code></div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="document.getElementById('loginEmail').value='admin@solemate.vn'; document.getElementById('loginPassword').value='123456';">
+                    <div class="text-secondary mb-2"><code>admin@applemeomeo.vn</code> / <code>123456</code></div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="document.getElementById('loginEmail').value='admin@applemeomeo.vn'; document.getElementById('loginPassword').value='123456';">
                         <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Điền thông tin
                     </button>
                 </div>

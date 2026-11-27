@@ -289,7 +289,7 @@
                                 <div>
                                     <div class="fw-bold text-dark"><?= htmlspecialchars($review['full_name']) ?></div>
                                     <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.7rem;">
-                                        <i class="fa-solid fa-circle-check me-1"></i>Đã mua hàng tại SoleVibe
+                                        <i class="fa-solid fa-circle-check me-1"></i>Đã mua hàng tại Apple Meo Meo
                                     </span>
                                 </div>
                             </div>
@@ -301,7 +301,7 @@
                         <p class="text-secondary mb-2" style="line-height: 1.6;"><?= nl2br(htmlspecialchars($review['content'])) ?></p>
                         <?php if (!empty($review['admin_response'])): ?>
                             <div class="bg-light rounded-3 p-3 mt-2 border-start border-danger border-4">
-                                <div class="fw-bold text-dark small"><i class="fa-solid fa-store me-1 text-danger"></i> Phản hồi từ cửa hàng SoleVibe:</div>
+                                <div class="fw-bold text-dark small"><i class="fa-solid fa-store me-1 text-danger"></i> Phản hồi từ cửa hàng Apple Meo Meo:</div>
                                 <p class="mb-0 mt-1 small text-secondary"><?= nl2br(htmlspecialchars($review['admin_response'])) ?></p>
                             </div>
                         <?php endif; ?>

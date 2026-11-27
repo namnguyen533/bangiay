@@ -27,7 +27,7 @@ class HomeController extends BaseController
         $brands = $brandModel->getAllActive();
 
         $this->view('home', [
-            'pageTitle'        => 'SoleVibe - Thế Giới Giày Sneaker Chính Hãng',
+            'pageTitle'        => 'Apple Meo Meo - Thế Giới Giày Sneaker Chính Hãng',
             'featuredProducts' => $featuredProducts,
             'categories'       => $categories,
             'brands'           => $brands,

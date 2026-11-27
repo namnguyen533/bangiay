@@ -63,7 +63,7 @@ class CheckoutController extends BaseController
         $availableVouchers = $this->voucherModel->getActiveVouchers();
 
         $this->view('checkout', [
-            'pageTitle'         => 'Thanh Toán Đơn Hàng - SoleVibe',
+            'pageTitle'         => 'Thanh Toán Đơn Hàng - Apple Meo Meo',
             'items'             => $items,
             'subtotal'          => $subtotal,
             'shippingFee'       => $shippingFee,
@@ -244,7 +244,7 @@ class CheckoutController extends BaseController
         }
 
         $this->view('success', [
-            'pageTitle' => 'Đặt Hàng Thành Công - SoleVibe',
+            'pageTitle' => 'Đặt Hàng Thành Công - Apple Meo Meo',
             'order'     => $order,
         ]);
     }

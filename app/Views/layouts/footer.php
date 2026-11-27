@@ -4,8 +4,9 @@
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-4 col-md-6">
-                    <h5 class="text-white fw-bold mb-3">
-                        <i class="fa-solid fa-shoe-prints me-2 text-danger"></i>SoleVibe Sneaker Store
+                    <h5 class="d-flex align-items-center gap-3 text-white fw-bold mb-3">
+                        <img src="<?= htmlspecialchars(asset('images/apple-meo-meo-logo.png')) ?>" alt="Apple Meo Meo Shoes Store" style="width: 64px; height: 64px; object-fit: cover; border-radius: 8px;">
+                        <span>Apple Meo Meo Shoes Store</span>
                     </h5>
                     <p class="small text-secondary mb-3">
                         Hệ thống phân phối giày sneaker chính hãng hàng đầu Việt Nam. Cam kết 100% chính hãng, đền gấp 10 lần nếu phát hiện hàng giả.
@@ -41,7 +42,7 @@
                     <h6 class="text-white fw-bold mb-3">Liên Hệ Trực Tiếp</h6>
                     <p class="small text-secondary mb-2"><i class="fa-solid fa-location-dot me-2 text-danger"></i> 123 Đường Cầu Giấy, Hà Nội</p>
                     <p class="small text-secondary mb-2"><i class="fa-solid fa-phone me-2 text-danger"></i> 0901.234.567</p>
-                    <p class="small text-secondary mb-2"><i class="fa-solid fa-envelope me-2 text-danger"></i> hotro@solevibe.vn</p>
+                    <p class="small text-secondary mb-2"><i class="fa-solid fa-envelope me-2 text-danger"></i> hotro@applemepmeo.vn</p>
                     <p class="small text-secondary"><i class="fa-solid fa-clock me-2 text-danger"></i> 08:30 - 22:00 tất cả các ngày</p>
                 </div>
             </div>
@@ -49,7 +50,7 @@
             <hr class="border-secondary my-4">
 
             <div class="d-flex flex-wrap justify-content-between align-items-center small text-secondary">
-                <p class="mb-0">&copy; <?= date('Y') ?> SoleVibe Store. Thiết kế theo kiến trúc chuẩn PHP MVC (PDO & MySQL).</p>
+                <p class="mb-0">&copy; <?= date('Y') ?> Apple Meo Meo Store. Thiết kế theo kiến trúc chuẩn PHP MVC (PDO & MySQL).</p>
                 <p class="mb-0">Dự Án Website Bán Giày Chuyên Nghiệp</p>
             </div>
         </div>
