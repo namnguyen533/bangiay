@@ -42,26 +42,85 @@ $currentUser = auth();
         .navbar-brand span {
             color: var(--primary);
         }
+        .navbar-top-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
         .navbar-search {
             position: relative;
-            flex: 1 1 20rem;
+            flex: 1 1 0;
             min-width: 0;
-            max-width: 480px;
+            max-width: 640px;
             z-index: 1;
+        }
+        .navbar-account {
+            flex: 0 0 auto;
+            margin-left: auto;
+        }
+        .navbar-account-name {
+            display: inline-block;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .navbar > .container {
+            flex-wrap: wrap;
+        }
+        #navContent {
+            flex-basis: 100%;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f1f5f9;
+        }
+        #navContent .navbar-nav {
+            justify-content: center;
+            width: 100%;
         }
         @media (max-width: 1199.98px) {
             .navbar > .container {
                 flex-wrap: wrap;
             }
-            .navbar-search {
+            .navbar-top-row {
+                flex-wrap: wrap;
+                column-gap: 0.65rem;
+                row-gap: 0.75rem;
+            }
+            .navbar-brand {
+                order: 1;
+            }
+            .navbar-account {
+                order: 2;
+            }
+            .navbar-toggler {
                 order: 3;
+            }
+            .navbar-search {
+                order: 4;
                 flex: 0 0 100%;
                 max-width: none;
-                margin: 0.5rem 0 0 !important;
+                margin: 0 !important;
             }
             #navContent {
-                order: 4;
+                order: 5;
                 flex-basis: 100%;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+                margin-right: 0;
+            }
+            .navbar-top-row {
+                column-gap: 0.45rem;
+            }
+            .navbar-account-name {
+                display: none;
+            }
+            .navbar-account .btn {
+                padding: 0.45rem 0.7rem;
             }
         }
         .nav-link {
@@ -398,25 +457,70 @@ $currentUser = auth();
     <!-- Header Navigation -->
     <nav class="navbar navbar-expand-xl bg-white sticky-top shadow-sm py-3">
         <div class="container">
-            <a class="navbar-brand" href="<?= route_url() ?>">
-                <i class="fa-solid fa-shoe-prints me-2 text-danger"></i>Sole<span>Vibe</span>
-            </a>
-            
-            <button class="navbar-toggler order-2" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <div class="navbar-top-row">
+                <a class="navbar-brand" href="<?= route_url() ?>">
+                    <i class="fa-solid fa-shoe-prints me-2 text-danger"></i>Sole<span>Vibe</span>
+                </a>
 
-            <!-- Search stays outside the collapsible navigation so it cannot collide with page content. -->
-            <form class="navbar-search d-flex mx-xl-4 my-2 my-xl-0" action="<?= route_url('products') ?>" method="GET">
-                <input type="hidden" name="act" value="products">
-                <div class="input-group">
-                    <input id="searchInput" class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm tên giày, hãng, mã SKU..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
-                    <button class="btn btn-primary px-3" type="submit">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
+                <form class="navbar-search d-flex" action="<?= route_url('products') ?>" method="GET">
+                    <input type="hidden" name="act" value="products">
+                    <div class="input-group">
+                        <input id="searchInput" class="form-control bg-light border-0" type="search" name="q" placeholder="Tìm tên giày, hãng, mã SKU..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" autocomplete="off">
+                        <button class="btn btn-primary px-3" type="submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                    <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
+                </form>
+
+                <div class="navbar-account">
+                    <?php if ($currentUser): ?>
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-circle-user fs-4 text-primary"></i>
+                                <span class="navbar-account-name fw-semibold text-dark"><?= htmlspecialchars($currentUser['full_name']) ?></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                                <?php if (!is_admin()): ?>
+                                    <li>
+                                        <a class="dropdown-item py-2" href="<?= route_url('my-orders') ?>">
+                                            <i class="fa-solid fa-box-open me-2 text-secondary"></i> Đơn Hàng Của Tôi
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php endif; ?>
+                                <?php if (is_admin()): ?>
+                                    <li>
+                                        <a class="dropdown-item py-2 text-danger fw-bold" href="<?= route_url('admin') ?>">
+                                            <i class="fa-solid fa-gauge-high me-2"></i> Trang Quản Trị
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php endif; ?>
+                                <li>
+                                    <a class="dropdown-item py-2" href="<?= route_url('wishlist') ?>">
+                                        <i class="fa-solid fa-heart me-2 text-danger"></i> Sản Phẩm Yêu Thích
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="<?= route_url('logout') ?>">
+                                        <i class="fa-solid fa-right-from-bracket me-2 text-secondary"></i> Đăng Xuất
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    <?php else: ?>
+                        <a href="<?= route_url('login') ?>" class="btn btn-primary rounded-pill px-4 py-2">
+                            <i class="fa-solid fa-user me-1"></i> Đăng Nhập
+                        </a>
+                    <?php endif; ?>
                 </div>
-                <div id="searchSuggestBox" class="position-absolute start-0 end-0 bg-white rounded-3 shadow-lg border mt-1 p-2 d-none" style="top: 100%; z-index: 1060; max-height: 420px; overflow-y: auto;"></div>
-            </form>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent" aria-controls="navContent" aria-expanded="false" aria-label="Mở menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
 
             <div class="collapse navbar-collapse" id="navContent">
                 <!-- Navigation links -->
@@ -458,50 +562,6 @@ $currentUser = auth();
                         </a>
                     </li>
 
-                    <!-- User Account -->
-                    <?php if ($currentUser): ?>
-                        <li class="nav-item dropdown ms-lg-2">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fa-solid fa-circle-user fs-4 text-primary"></i>
-                                <span class="fw-semibold text-dark"><?= htmlspecialchars($currentUser['full_name']) ?></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                                <?php if (!is_admin()): ?>
-                                    <li>
-                                        <a class="dropdown-item py-2" href="<?= route_url('my-orders') ?>">
-                                            <i class="fa-solid fa-box-open me-2 text-secondary"></i> Đơn Hàng Của Tôi
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                <?php endif; ?>
-                                <?php if (is_admin()): ?>
-                                    <li>
-                                        <a class="dropdown-item py-2 text-danger fw-bold" href="<?= route_url('admin') ?>">
-                                            <i class="fa-solid fa-gauge-high me-2"></i> Trang Quản Trị
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                <?php endif; ?>
-                                <li>
-                                    <a class="dropdown-item py-2" href="<?= route_url('wishlist') ?>">
-                                        <i class="fa-solid fa-heart me-2 text-danger"></i> Sản Phẩm Yêu Thích
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item py-2" href="<?= route_url('logout') ?>">
-                                        <i class="fa-solid fa-right-from-bracket me-2 text-secondary"></i> Đăng Xuất
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    <?php else: ?>
-                        <li class="nav-item ms-lg-2">
-                            <a href="<?= route_url('login') ?>" class="btn btn-primary rounded-pill px-4 py-2">
-                                <i class="fa-solid fa-user me-1"></i> Đăng Nhập
-                            </a>
-                        </li>
-                    <?php endif; ?>
                 </ul>
             </div>
         </div>
