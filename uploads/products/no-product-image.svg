@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#f3f4f6"/>
+  <g fill="none" stroke="#9ca3af" stroke-linecap="round" stroke-linejoin="round" stroke-width="12">
+    <rect x="300" y="185" width="200" height="150" rx="18"/>
+    <circle cx="360" cy="235" r="20"/>
+    <path d="m315 315 55-55 45 45 35-35 40 45"/>
+  </g>
+  <text x="400" y="405" fill="#6b7280" font-family="Arial, sans-serif" font-size="26" text-anchor="middle">
+    Chưa có ảnh sản phẩm phù hợp
+  </text>
+</svg>

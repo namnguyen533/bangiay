@@ -1,6 +1,39 @@
 <!-- Hero Banner Section -->
-<section class="py-5 bg-dark text-white rounded-4 my-3 mx-lg-4 shadow" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
-    <div class="container py-4">
+<section class="py-5 bg-dark text-white rounded-4 my-3 mx-lg-4 shadow" style="position: relative; overflow: hidden; min-height: 520px; background: #0f172a;">
+    <div id="featuredSneakerCarousel" class="carousel slide carousel-fade position-absolute top-0 start-0 w-100 h-100" style="z-index: 0;" aria-label="Bộ sưu tập giày nổi bật">
+        <div class="carousel-indicators">
+            <button type="button" data-carousel-slide="0" class="active" aria-current="true" aria-label="Ảnh 1"></button>
+            <button type="button" data-carousel-slide="1" aria-label="Ảnh 2"></button>
+            <button type="button" data-carousel-slide="2" aria-label="Ảnh 3"></button>
+            <button type="button" data-carousel-slide="3" aria-label="Ảnh 4"></button>
+            <button type="button" data-carousel-slide="4" aria-label="Ảnh 5"></button>
+        </div>
+        <div class="carousel-inner h-100">
+            <div class="carousel-item active h-100">
+                <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=1920&auto=format&fit=crop&q=85" alt="Giày sneaker nổi bật 1" class="d-block w-100" style="height: 100%; min-height: 520px; object-fit: cover;">
+            </div>
+            <div class="carousel-item h-100">
+                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1920&auto=format&fit=crop&q=85" alt="Giày sneaker nổi bật 2" class="d-block w-100" style="height: 100%; min-height: 520px; object-fit: cover;">
+            </div>
+            <div class="carousel-item h-100">
+                <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1920&auto=format&fit=crop&q=85" alt="Giày sneaker nổi bật 3" class="d-block w-100" style="height: 100%; min-height: 520px; object-fit: cover;">
+            </div>
+            <div class="carousel-item h-100">
+                <img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=1920&auto=format&fit=crop&q=85" alt="Giày sneaker nổi bật 4" class="d-block w-100" style="height: 100%; min-height: 520px; object-fit: cover;">
+            </div>
+            <div class="carousel-item h-100">
+                <img src="https://images.unsplash.com/photo-1495555961986-6d4c1ecb7be3?w=1920&auto=format&fit=crop&q=85" alt="Giày sneaker nổi bật 5" class="d-block w-100" style="height: 100%; min-height: 520px; object-fit: cover;">
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-carousel-action="prev" aria-label="Ảnh trước">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-carousel-action="next" aria-label="Ảnh tiếp theo">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+    </div>
+    <div aria-hidden="true" style="position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(15, 23, 42, .94) 0%, rgba(15, 23, 42, .78) 44%, rgba(15, 23, 42, .2) 100%);"></div>
+    <div class="container py-4 position-relative" style="z-index: 3;">
         <div class="row align-items-center g-4">
             <div class="col-lg-7">
                 <span class="badge bg-danger mb-3 px-3 py-2 text-uppercase fw-bold">BST Sneaker Mùa Hè 2026</span>
@@ -19,11 +52,33 @@
                     <?php endif; ?>
                 </div>
             </div>
-            <div class="col-lg-5 text-center">
-                <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=700&auto=format&fit=crop&q=80" alt="Featured Sneaker" class="img-fluid rounded-4 shadow-lg" style="max-height: 380px; object-fit: cover;">
-            </div>
         </div>
     </div>
+    <script>
+        (() => {
+            const carousel = document.getElementById('featuredSneakerCarousel');
+            const slides = Array.from(carousel.querySelectorAll('.carousel-item'));
+            const indicators = Array.from(carousel.querySelectorAll('[data-carousel-slide]'));
+            let activeIndex = Math.max(0, slides.findIndex(slide => slide.classList.contains('active')));
+
+            const showSlide = index => {
+                slides[activeIndex].classList.remove('active');
+                indicators[activeIndex].classList.remove('active');
+                indicators[activeIndex].removeAttribute('aria-current');
+                activeIndex = (index + slides.length) % slides.length;
+                slides[activeIndex].classList.add('active');
+                indicators[activeIndex].classList.add('active');
+                indicators[activeIndex].setAttribute('aria-current', 'true');
+            };
+
+            window.setInterval(() => showSlide(activeIndex + 1), 3500);
+            carousel.querySelector('[data-carousel-action="prev"]').addEventListener('click', () => showSlide(activeIndex - 1));
+            carousel.querySelector('[data-carousel-action="next"]').addEventListener('click', () => showSlide(activeIndex + 1));
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => showSlide(index));
+            });
+        })();
+    </script>
 </section>
 
 <!-- Value Props Highlights -->
@@ -106,7 +161,7 @@
                                 <i class="fa-regular fa-heart text-danger"></i>
                             </a>
                             <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
-                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
+                                <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
                             </a>
                             <?php if (!empty($item['brand_name'])): ?>
                                 <span class="badge-brand"><?= htmlspecialchars($item['brand_name']) ?></span>

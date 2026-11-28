@@ -14,7 +14,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Mã Code Voucher <span class="text-danger">*</span></label>
-                    <input type="text" name="code" class="form-control text-uppercase fw-bold" placeholder="VÍ DỤ: SOLEVIBE20" required>
+                    <input type="text" name="code" class="form-control text-uppercase fw-bold" placeholder="VÍ DỤ: APPLEMEOMEO20" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Loại Giảm Giá <span class="text-danger">*</span></label>

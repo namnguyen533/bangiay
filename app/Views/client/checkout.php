@@ -165,7 +165,7 @@ $availableVouchers = !empty($availableVouchers) && is_array($availableVouchers) 
                     <div class="order-items-list mb-3" style="max-height: 280px; overflow-y: auto;">
                         <?php foreach ($items as $item): ?>
                             <div class="d-flex align-items-center gap-3 py-2 border-bottom">
-                                <img src="<?= htmlspecialchars(function_exists('image_src') ? image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') : ($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
+                                <img src="<?= htmlspecialchars(function_exists('image_src') ? image_src($item['image_url'] ?: 'uploads/products/no-product-image.svg') : ($item['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="<?= htmlspecialchars($item['product_name'] ?? 'Giày') ?>" class="rounded-3 border" style="width: 55px; height: 55px; object-fit: cover;">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-0 fw-bold small text-truncate" style="max-width: 200px;"><?= htmlspecialchars($item['product_name'] ?? '') ?></h6>
                                     <span class="small text-secondary">Size <?= htmlspecialchars($item['size'] ?? '') ?> | SL: <?= (int)($item['quantity'] ?? 1) ?></span>

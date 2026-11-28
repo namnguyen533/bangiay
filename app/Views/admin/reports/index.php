@@ -134,7 +134,7 @@
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <img src="<?= htmlspecialchars($tp['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600') ?>" alt="Shoe" class="rounded-2 border" style="width: 42px; height: 42px; object-fit: cover;">
+                                                <img src="<?= htmlspecialchars(image_src($tp['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="Shoe" class="rounded-2 border" style="width: 42px; height: 42px; object-fit: cover;">
                                                 <div class="fw-bold small text-dark"><?= htmlspecialchars($tp['product_name']) ?></div>
                                             </div>
                                         </td>

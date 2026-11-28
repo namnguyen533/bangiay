@@ -59,12 +59,12 @@ class StockReceiptController extends BaseController
                 trim($_POST['note'] ?? '') ?: null,
                 $items
             );
-        } catch (InvalidArgumentException | RuntimeException $exception) {
-            set_flash('error', $exception->getMessage(), 'danger');
-            $this->redirect(route_url('admin-inventory'));
         } catch (PDOException $exception) {
             error_log('Stock receipt creation failed: ' . $exception->getMessage());
             set_flash('error', 'Không thể lưu phiếu nhập. Vui lòng kiểm tra cấu trúc database.', 'danger');
+            $this->redirect(route_url('admin-inventory'));
+        } catch (InvalidArgumentException | RuntimeException $exception) {
+            set_flash('error', $exception->getMessage(), 'danger');
             $this->redirect(route_url('admin-inventory'));
         }
 

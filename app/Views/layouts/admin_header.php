@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'Quản Trị SoleVibe') ?></title>
+    <title><?= htmlspecialchars($pageTitle ?? 'Quản Trị Apple Meo Meo') ?></title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
@@ -47,12 +47,11 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 13px;
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
             color: #fff;
-            background: var(--admin-primary);
-            box-shadow: 0 8px 18px rgba(255, 71, 87, 0.24);
+            background: #000;
         }
         .admin-sidebar-caption {
             padding: 0 30px;
@@ -344,8 +343,8 @@
     <aside class="admin-sidebar py-3" id="adminSidebar">
         <div class="px-4 mb-4">
             <a href="<?= route_url('admin') ?>" class="admin-brand">
-                <span class="admin-brand-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                <span>SoleVibe<small class="d-block text-secondary fw-normal mt-1">TRANG QUẢN TRỊ</small></span>
+                <img class="admin-brand-icon" src="<?= htmlspecialchars(asset('images/apple-meo-meo-logo.png')) ?>" alt="Apple Meo Meo Shoes Store">
+                <span>Apple Meo Meo<small class="d-block text-secondary fw-normal mt-1">TRANG QUẢN TRỊ</small></span>
             </a>
         </div>
 

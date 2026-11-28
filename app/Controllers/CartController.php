@@ -31,7 +31,7 @@ class CartController extends BaseController
         $availableVouchers = $this->voucherModel->getActiveVouchers();
 
         $this->view('cart', [
-            'pageTitle'         => 'Giỏ Hàng Của Bạn - SoleVibe',
+            'pageTitle'         => 'Giỏ Hàng Của Bạn - Apple Meo Meo',
             'items'             => $items,
             'subtotal'          => $subtotal,
             'totalQuantity'     => $totalQuantity,

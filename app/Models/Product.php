@@ -265,7 +265,7 @@ class Product extends BaseModel
         }
 
         if (!is_array($imageUrls) || empty($imageUrls)) {
-            $imageUrls = ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600'];
+            $imageUrls = ['uploads/products/no-product-image.svg'];
         }
 
         foreach (array_values(array_unique($imageUrls)) as $index => $imageUrl) {

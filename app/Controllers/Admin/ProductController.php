@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Core\BaseController;
+use App\Core\DescriptionSanitizer;
 use App\Core\ImageUploader;
 use App\Models\Brand;
 use App\Models\Category;
@@ -53,7 +54,7 @@ class ProductController extends BaseController
         $name = trim($_POST['name'] ?? '');
         $brandId = $this->optionalId($_POST['brand_id'] ?? null);
         $categoryId = $this->optionalId($_POST['category_id'] ?? null);
-        $description = trim($_POST['description'] ?? '');
+        $description = $this->submittedDescription('admin-product-create');
         $imageUrl = $this->validatedImageUrl(trim($_POST['image_url'] ?? ''), 'admin-product-create');
         $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '', 'admin-product-create');
         if ($name === '' || mb_strlen($name) > 200) {
@@ -105,6 +106,7 @@ class ProductController extends BaseController
             set_flash('error', 'Không tìm thấy sản phẩm.', 'danger');
             $this->redirect(route_url('admin-products'));
         }
+        $product['description'] = DescriptionSanitizer::sanitize((string)($product['description'] ?? ''));
 
         $this->adminView('products/edit', [
             'pageTitle' => 'Chỉnh Sửa Sản Phẩm: ' . $product['name'],
@@ -127,7 +129,7 @@ class ProductController extends BaseController
         $name = trim($_POST['name'] ?? '');
         $brandId = $this->optionalId($_POST['brand_id'] ?? null);
         $categoryId = $this->optionalId($_POST['category_id'] ?? null);
-        $description = trim($_POST['description'] ?? '');
+        $description = $this->submittedDescription('admin-product-edit', ['id' => $id]);
         $imageUrl = $this->validatedImageUrl(trim($_POST['image_url'] ?? ''), 'admin-product-edit', ['id' => $id]);
         $imageUrls = $this->parseImageUrls($_POST['image_urls'] ?? '', 'admin-product-edit', ['id' => $id]);
         $status = $_POST['status'] ?? '';
@@ -209,6 +211,16 @@ class ProductController extends BaseController
         }
 
         return array_values(array_unique($urls));
+    }
+
+    private function submittedDescription(string $route, array $params = []): string
+    {
+        $description = $_POST['description'] ?? '';
+        if (!is_string($description)) {
+            $this->fail('Nội dung mô tả không hợp lệ.', $route, $params);
+        }
+
+        return DescriptionSanitizer::sanitize($description);
     }
 
     private function submittedVariants(): array

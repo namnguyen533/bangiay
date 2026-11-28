@@ -55,8 +55,13 @@ class OrderController extends BaseController
             if (!$this->orderModel->updateStatus($id, $status)) {
                 set_flash('error', 'Không thể cập nhật đơn hàng không tồn tại hoặc đã hủy.', 'danger');
             } else {
-                if ($paymentStatus) {
-                    $this->orderModel->updatePaymentStatus($id, $paymentStatus);
+                $paymentWasSetPaidOnCompletion = $status === 'completed' && $paymentStatus === 'unpaid';
+                if ($paymentStatus && !$paymentWasSetPaidOnCompletion) {
+                    if (!$this->orderModel->updatePaymentStatus($id, $paymentStatus)) {
+                        set_flash('error', 'Đơn hàng đã cập nhật nhưng trạng thái thanh toán chưa được cập nhật.', 'danger');
+                        $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+                        return;
+                    }
                 }
                 set_flash('success', 'Đã cập nhật trạng thái đơn hàng thành công!', 'success');
             }

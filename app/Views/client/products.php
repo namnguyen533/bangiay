@@ -176,7 +176,7 @@
                                         <i class="fa-regular fa-heart text-danger"></i>
                                     </a>
                                     <a href="<?= route_url('product-detail', ['id' => $item['id']]) ?>">
-                                        <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
+                                        <img src="<?= htmlspecialchars(image_src($item['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="<?= htmlspecialchars($item['name']) ?>" loading="lazy">
                                     </a>
                                     <?php if (!empty($item['brand_name'])): ?>
                                         <span class="badge-brand"><?= htmlspecialchars($item['brand_name']) ?></span>

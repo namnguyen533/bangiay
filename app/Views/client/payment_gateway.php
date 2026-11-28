@@ -20,7 +20,7 @@ $recipientPhone = htmlspecialchars($order['recipient_phone'] ?? '');
 
 $bankId = 'MB'; // MB Bank
 $accountNo = '0987654321';
-$accountName = 'SOLEVIBE SNEAKER STORE';
+$accountName = 'APPLE MEO MEO STORE';
 $vietQrUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-compact2.png?amount=" . (int)$totalAmount . "&addInfo=" . urlencode($orderCode) . "&accountName=" . urlencode($accountName);
 ?>
 <div class="container my-5" style="max-width: 680px;">
@@ -64,7 +64,7 @@ $vietQrUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-compact2.png?am
         <div class="text-muted small mb-4">
             <div>Ngân hàng thụ hưởng: <strong>MBBank (Ngân hàng Quân Đội)</strong></div>
             <div>Số tài khoản: <strong class="text-dark">0987654321</strong></div>
-            <div>Chủ tài khoản: <strong>SOLEVIBE SNEAKER STORE</strong></div>
+            <div>Chủ tài khoản: <strong>APPLE MEO MEO STORE</strong></div>
             <div>Nội dung chuyển khoản: <strong class="text-danger fs-6"><?= $orderCode ?></strong></div>
         </div>
 

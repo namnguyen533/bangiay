@@ -22,7 +22,7 @@ class WishlistController extends BaseController
         $items = $this->wishlistModel->getByUserId((int)$user['id']);
 
         $this->view('wishlist', [
-            'pageTitle' => 'Sản Phẩm Yêu Thích - SoleVibe',
+            'pageTitle' => 'Sản Phẩm Yêu Thích - Apple Meo Meo',
             'items'     => $items,
         ]);
     }

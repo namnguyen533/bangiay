@@ -1,4 +1,9 @@
 <div class="container my-4">
+    <?php
+    $hasProductImage = !empty($product['image_url']);
+    $mainImageUrl = $hasProductImage ? $product['image_url'] : 'uploads/products/no-product-image.svg';
+    $mainImageAlt = $product['image_alt_text'] ?: ($hasProductImage ? $product['name'] : 'Ảnh sản phẩm chưa được cập nhật');
+    ?>
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -11,35 +16,64 @@
     <div class="row g-4 g-lg-5">
         <!-- Cột Gallery Ảnh Sản Phẩm -->
         <div class="col-lg-6">
-            <div class="bg-white p-3 rounded-4 border shadow-sm mb-3 text-center position-relative overflow-hidden" style="min-height: 420px; display: flex; align-items: center; justify-content: center;">
+            <div id="product3dStage" class="product-3d-stage bg-white p-3 rounded-4 border shadow-sm mb-2 text-center position-relative overflow-hidden">
                 <img id="mainProductImg"
-                     src="<?= htmlspecialchars(image_src($product['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>"
-                     alt="<?= htmlspecialchars($product['name']) ?>"
+                     src="<?= htmlspecialchars(image_src($mainImageUrl)) ?>"
+                     alt="<?= htmlspecialchars($mainImageAlt) ?>"
                      class="img-fluid rounded-3 main-image-zoom"
-                     style="max-height: 450px; object-fit: contain; width: 100%; transition: transform 0.3s ease;">
+                     draggable="false">
                 <?php if (!empty($product['brand_name'])): ?>
                     <span class="badge-brand"><?= htmlspecialchars($product['brand_name']) ?></span>
                 <?php endif; ?>
             </div>
+            <div class="product-3d-controls bg-white border rounded-4 p-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <span class="small fw-semibold text-dark"><i class="fa-solid fa-cube me-1 text-danger"></i> Xoay xem sản phẩm</span>
+                    <div class="d-flex gap-2">
+                        <button id="product3dSpin" type="button" class="btn btn-sm btn-outline-dark rounded-pill">
+                            <i class="fa-solid fa-rotate me-1"></i> Tự xoay
+                        </button>
+                        <button id="product3dReset" type="button" class="btn btn-sm btn-light rounded-pill" aria-label="Đặt lại góc xoay">
+                            Đặt lại
+                        </button>
+                    </div>
+                </div>
+                <input id="product3dAngle" class="form-range mb-1" type="range" min="0" max="360" value="0" aria-label="Góc xoay ảnh sản phẩm">
+                <div class="d-flex justify-content-between small text-secondary">
+                    <span>Kéo trực tiếp ảnh hoặc thanh trượt để xoay</span>
+                    <span id="product3dAngleLabel" aria-live="polite">0°</span>
+                </div>
+                <p class="small text-secondary mb-0 mt-2">Hiệu ứng 3D mô phỏng từ ảnh hiện có; muốn xem chính xác mặt sau cần ảnh nhiều góc hoặc mô hình 3D.</p>
+            </div>
+            <p id="galleryImageCaption" class="small text-secondary mb-2">
+                <?= htmlspecialchars($mainImageAlt) ?>
+            </p>
 
             <!-- Gallery ảnh thu nhỏ (Thumbnails) -->
             <?php
             $galleryImages = $product['images'] ?? [];
             if (empty($galleryImages) && !empty($product['image_url'])) {
-                $galleryImages[] = ['image_url' => $product['image_url']];
+                $galleryImages[] = [
+                    'image_url' => $product['image_url'],
+                    'alt_text' => $product['image_alt_text'] ?: $product['name'],
+                ];
             }
             ?>
             <?php if (!empty($galleryImages)): ?>
-                <div class="d-flex gap-2 overflow-auto py-2 gallery-thumbnails">
+                <div class="d-flex gap-2 overflow-auto py-2 gallery-thumbnails" role="group" aria-label="Ảnh sản phẩm">
                     <?php foreach ($galleryImages as $idx => $img): ?>
-                        <div class="thumbnail-wrapper rounded-3 border p-1 cursor-pointer <?= $idx === 0 ? 'border-danger border-2' : '' ?>"
-                             style="width: 82px; height: 82px; flex-shrink: 0; cursor: pointer;"
-                             onclick="changeGalleryImage(this, '<?= htmlspecialchars(image_src($img['image_url'])) ?>')">
+                        <button type="button"
+                                class="thumbnail-wrapper rounded-3 border p-1 bg-white <?= $idx === 0 ? 'border-danger border-2' : '' ?>"
+                                style="width: 82px; height: 82px; flex-shrink: 0; cursor: pointer;"
+                                data-image-url="<?= htmlspecialchars(image_src($img['image_url'])) ?>"
+                                data-image-alt="<?= htmlspecialchars($img['alt_text'] ?: $product['name']) ?>"
+                                aria-label="<?= htmlspecialchars($img['alt_text'] ?: 'Ảnh sản phẩm ' . ($idx + 1)) ?>"
+                                aria-pressed="<?= $idx === 0 ? 'true' : 'false' ?>">
                             <img src="<?= htmlspecialchars(image_src($img['image_url'])) ?>"
-                                 alt="Thumbnail <?= $idx + 1 ?>"
+                                 alt=""
                                  class="w-100 h-100 rounded-2"
                                  style="object-fit: cover;">
-                        </div>
+                        </button>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -216,7 +250,7 @@
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="lead fs-6 text-secondary" style="line-height: 1.8;">
-                    <?= nl2br(htmlspecialchars($product['description'] ?? 'Mẫu giày sneaker cao cấp được thiết kế tinh xảo, êm ái cho đôi chân, phong cách trẻ trung và năng động.')) ?>
+                    <?= \App\Core\DescriptionSanitizer::sanitize((string)($product['description'] ?? 'Mẫu giày sneaker cao cấp được thiết kế tinh xảo, êm ái cho đôi chân, phong cách trẻ trung và năng động.')) ?>
                 </div>
             </div>
             <div class="col-lg-4">
@@ -289,7 +323,7 @@
                                 <div>
                                     <div class="fw-bold text-dark"><?= htmlspecialchars($review['full_name']) ?></div>
                                     <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.7rem;">
-                                        <i class="fa-solid fa-circle-check me-1"></i>Đã mua hàng tại SoleVibe
+                                        <i class="fa-solid fa-circle-check me-1"></i>Đã mua hàng tại Apple Meo Meo
                                     </span>
                                 </div>
                             </div>
@@ -301,7 +335,7 @@
                         <p class="text-secondary mb-2" style="line-height: 1.6;"><?= nl2br(htmlspecialchars($review['content'])) ?></p>
                         <?php if (!empty($review['admin_response'])): ?>
                             <div class="bg-light rounded-3 p-3 mt-2 border-start border-danger border-4">
-                                <div class="fw-bold text-dark small"><i class="fa-solid fa-store me-1 text-danger"></i> Phản hồi từ cửa hàng SoleVibe:</div>
+                                <div class="fw-bold text-dark small"><i class="fa-solid fa-store me-1 text-danger"></i> Phản hồi từ cửa hàng Apple Meo Meo:</div>
                                 <p class="mb-0 mt-1 small text-secondary"><?= nl2br(htmlspecialchars($review['admin_response'])) ?></p>
                             </div>
                         <?php endif; ?>
@@ -404,7 +438,7 @@
                         <div class="product-card h-100 d-flex flex-column">
                             <div class="product-img-box">
                                 <a href="<?= route_url('product-detail', ['id' => $rel['id']]) ?>">
-                                    <img src="<?= htmlspecialchars(image_src($rel['image_url'] ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600')) ?>" alt="<?= htmlspecialchars($rel['name']) ?>" loading="lazy">
+                                    <img src="<?= htmlspecialchars(image_src($rel['image_url'] ?: 'uploads/products/no-product-image.svg')) ?>" alt="<?= htmlspecialchars($rel['name']) ?>" loading="lazy">
                                 </a>
                                 <?php if (!empty($rel['brand_name'])): ?>
                                     <span class="badge-brand"><?= htmlspecialchars($rel['brand_name']) ?></span>
@@ -467,6 +501,34 @@
     </div>
 </div>
 
+<style>
+    .product-3d-stage {
+        min-height: 420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 1100px;
+        touch-action: pan-y;
+        cursor: grab;
+    }
+    .product-3d-stage.is-dragging {
+        cursor: grabbing;
+    }
+    .product-3d-stage #mainProductImg {
+        width: 100%;
+        max-height: 450px;
+        object-fit: contain;
+        transform: rotateY(0deg);
+        transform-style: preserve-3d;
+        transition: transform 0.12s ease-out, opacity 0.15s ease;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+    .product-3d-stage.is-dragging #mainProductImg {
+        transition: none;
+    }
+</style>
+
 <!-- JavaScript Điều Khiển Gallery Ảnh, Biến Thể Size/Màu & Rating Sao -->
 <script>
 // 1. Chuyển đổi ảnh trong Gallery
@@ -477,13 +539,109 @@ function changeGalleryImage(wrapper, imgUrl) {
     mainImg.style.opacity = '0.4';
     setTimeout(() => {
         mainImg.src = imgUrl;
+        mainImg.alt = wrapper.dataset.imageAlt || mainImg.alt;
         mainImg.style.opacity = '1';
+        setProductImageAngle(0);
     }, 150);
+    const caption = document.getElementById('galleryImageCaption');
+    if (caption) {
+        caption.textContent = wrapper.dataset.imageAlt || '';
+    }
 
     document.querySelectorAll('.thumbnail-wrapper').forEach(el => {
         el.classList.remove('border-danger', 'border-2');
+        el.setAttribute('aria-pressed', 'false');
     });
     wrapper.classList.add('border-danger', 'border-2');
+    wrapper.setAttribute('aria-pressed', 'true');
+}
+
+document.querySelectorAll('.thumbnail-wrapper').forEach(wrapper => {
+    wrapper.addEventListener('click', () => {
+        changeGalleryImage(wrapper, wrapper.dataset.imageUrl);
+    });
+});
+
+// Xoay ảnh quanh trục dọc để tạo hiệu ứng xem 3D từ một ảnh sản phẩm.
+const product3dStage = document.getElementById('product3dStage');
+const product3dImage = document.getElementById('mainProductImg');
+const product3dAngle = document.getElementById('product3dAngle');
+const product3dAngleLabel = document.getElementById('product3dAngleLabel');
+const product3dSpin = document.getElementById('product3dSpin');
+const product3dReset = document.getElementById('product3dReset');
+let productImageRotation = 0;
+let productSpinFrame = null;
+let productLastPointerX = null;
+
+function setProductImageAngle(angle) {
+    if (!product3dImage || !product3dAngle || !product3dAngleLabel) return;
+    productImageRotation = ((angle % 360) + 360) % 360;
+    product3dImage.style.transform = `rotateY(${productImageRotation}deg)`;
+    product3dAngle.value = Math.round(productImageRotation);
+    product3dAngleLabel.textContent = `${Math.round(productImageRotation)}°`;
+}
+
+function stopProductImageSpin() {
+    if (productSpinFrame !== null) {
+        cancelAnimationFrame(productSpinFrame);
+        productSpinFrame = null;
+    }
+    if (product3dSpin) {
+        product3dSpin.setAttribute('aria-pressed', 'false');
+        product3dSpin.innerHTML = '<i class="fa-solid fa-rotate me-1"></i> Tự xoay';
+    }
+}
+
+if (product3dStage && product3dImage && product3dAngle) {
+    let previousSpinTime = 0;
+    const spinFrame = (time) => {
+        if (productSpinFrame === null) return;
+        if (previousSpinTime) {
+            setProductImageAngle(productImageRotation + (time - previousSpinTime) * 0.045);
+        }
+        previousSpinTime = time;
+        productSpinFrame = requestAnimationFrame(spinFrame);
+    };
+
+    product3dStage.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) return;
+        stopProductImageSpin();
+        productLastPointerX = event.clientX;
+        product3dStage.classList.add('is-dragging');
+        product3dStage.setPointerCapture(event.pointerId);
+    });
+
+    product3dStage.addEventListener('pointermove', (event) => {
+        if (productLastPointerX === null) return;
+        const deltaX = event.clientX - productLastPointerX;
+        productLastPointerX = event.clientX;
+        setProductImageAngle(productImageRotation + deltaX * 0.8);
+    });
+
+    const finishProductImageDrag = () => {
+        productLastPointerX = null;
+        product3dStage.classList.remove('is-dragging');
+    };
+    product3dStage.addEventListener('pointerup', finishProductImageDrag);
+    product3dStage.addEventListener('pointercancel', finishProductImageDrag);
+    product3dAngle.addEventListener('input', () => {
+        stopProductImageSpin();
+        setProductImageAngle(Number(product3dAngle.value));
+    });
+    product3dSpin.addEventListener('click', () => {
+        if (productSpinFrame !== null) {
+            stopProductImageSpin();
+            return;
+        }
+        previousSpinTime = 0;
+        product3dSpin.setAttribute('aria-pressed', 'true');
+        product3dSpin.innerHTML = '<i class="fa-solid fa-pause me-1"></i> Dừng xoay';
+        productSpinFrame = requestAnimationFrame(spinFrame);
+    });
+    product3dReset.addEventListener('click', () => {
+        stopProductImageSpin();
+        setProductImageAngle(0);
+    });
 }
 
 // 2. Tăng giảm số lượng sản phẩm

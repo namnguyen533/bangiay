@@ -6,7 +6,7 @@
 
         <h2 class="fw-bold text-dark mb-2">Đặt Hàng Thành Công!</h2>
         <p class="text-secondary lead mb-4">
-            Cảm ơn bạn đã tin tưởng mua sắm tại <strong>SoleVibe Store</strong>. Chúng tôi đã nhận được đơn và sẽ tiến hành đóng gói giao hàng sớm nhất.
+            Cảm ơn bạn đã tin tưởng mua sắm tại <strong>Apple Meo Meo Store</strong>. Chúng tôi đã nhận được đơn và sẽ tiến hành đóng gói giao hàng sớm nhất.
         </p>
 
         <div class="alert alert-light border text-start p-4 rounded-3 mb-4">

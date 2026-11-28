@@ -26,7 +26,7 @@ class ReportController extends BaseController
         $stats = $this->orderModel->getDashboardStats();
 
         $this->adminView('reports/index', [
-            'pageTitle'          => 'Báo Cáo Thống Kê & Doanh Thu - SoleVibe Admin',
+            'pageTitle'          => 'Báo Cáo Thống Kê & Doanh Thu - Apple Meo Meo Admin',
             'stats'              => $stats,
             'revenueDays'        => $revenueDays,
             'revenueMonths'      => $revenueMonths,
@@ -47,7 +47,7 @@ class ReportController extends BaseController
         $orders = $this->orderModel->getAllForAdmin();
 
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=Bao_Cao_Doanh_Thu_SoleVibe_' . date('Ymd_His') . '.csv');
+        header('Content-Disposition: attachment; filename=Bao_Cao_Doanh_Thu_Apple_Meo_Meo_' . date('Ymd_His') . '.csv');
 
         $output = fopen('php://output', 'w');
         // Ghi BOM UTF-8 để mở trên Excel không bị lỗi font tiếng Việt
