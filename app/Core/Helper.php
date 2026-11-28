@@ -123,7 +123,8 @@ if (!function_exists('order_status_label')) {
             'shipping'  => 'Đang giao hàng',
             'completed' => 'Đã giao thành công',
             'cancelled' => 'Đã hủy',
-            'returned'  => 'Trả hàng/Hoàn tiền',
+            'returned'  => 'Đã trả hàng',
+            'return_requested' => 'Yêu cầu đổi/trả',
         ];
         return $labels[$status] ?? ucfirst($status);
     }
@@ -140,6 +141,7 @@ if (!function_exists('order_status_badge')) {
             'completed' => 'bg-success text-white',
             'cancelled' => 'bg-danger text-white',
             'returned'  => 'bg-dark text-white',
+            'return_requested' => 'bg-warning text-dark',
         ];
         return $classes[$status] ?? 'bg-secondary text-white';
     }

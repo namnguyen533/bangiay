@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\UserAddress;
 use App\Models\Voucher;
+use App\Core\OrderMailer;
 use Exception;
 
 class CheckoutController extends BaseController
@@ -183,6 +184,20 @@ class CheckoutController extends BaseController
         try {
             $orderId = $this->orderModel->createOrder($orderData, $items);
             $this->cart->clear();
+
+            $createdOrder = $this->orderModel->getDetail($orderId);
+            if ($createdOrder) {
+                OrderMailer::sendToAdmins(
+                    $createdOrder,
+                    'Đơn hàng mới #' . $createdOrder['order_code'],
+                    'Có đơn hàng mới vừa được khách hàng đặt.'
+                );
+                OrderMailer::sendToUser(
+                    $createdOrder,
+                    'Đặt hàng thành công #' . $createdOrder['order_code'],
+                    'Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đang chờ quản trị viên xác nhận.'
+                );
+            }
 
             // Nếu thanh toán online (VNPay / MoMo / Banking QR) -> chuyển sang trang cổng thanh toán
             if (in_array($paymentMethod, ['vnpay', 'momo', 'banking'])) {

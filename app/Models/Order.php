@@ -168,31 +168,23 @@ class Order extends BaseModel
         if (!$order) {
             return false;
         }
-
-        if ($status === 'cancelled') {
-            if ($order['order_status'] === 'cancelled') {
-                return true;
-            }
-
-            return $this->cancelOrder($orderId, null, 'Hủy bởi quản trị viên')['success'];
+        if (in_array($status, ['completed', 'cancelled', 'returned', 'return_requested'], true)) {
+            return false;
         }
-
-        if ($order['order_status'] === 'cancelled') {
+        $allowedNext = [
+            'pending' => 'confirmed',
+            'confirmed' => 'processing',
+            'processing' => 'shipping',
+        ];
+        if (($allowedNext[$order['order_status']] ?? null) !== $status) {
             return false;
         }
 
-        $sql = 'UPDATE orders SET order_status = :status';
-        $params = ['status' => $status, 'id' => $orderId];
-        if ($status === 'completed' && $order['payment_status'] === 'unpaid') {
-            $sql .= ", payment_status = 'paid'";
-        }
-        $updated = $this->query($sql . " WHERE id = :id AND order_status <> 'cancelled'", $params);
-        if ($updated->rowCount() > 0) {
-            return true;
-        }
-
-        $currentOrder = $this->fetch('SELECT order_status FROM orders WHERE id = :id', ['id' => $orderId]);
-        return $currentOrder !== null && $currentOrder['order_status'] === $status;
+        $updated = $this->query(
+            'UPDATE orders SET order_status = :status WHERE id = :id',
+            ['status' => $status, 'id' => $orderId]
+        );
+        return $updated->rowCount() > 0;
     }
 
     public function updatePaymentStatus(int $orderId, string $paymentStatus): bool
@@ -201,79 +193,221 @@ class Order extends BaseModel
     }
 
     /**
-     * Hủy đơn hàng và hoàn lại tồn kho cho các sản phẩm
+     * Khách hủy: pending hủy trực tiếp; confirmed gửi yêu cầu chờ admin duyệt.
      */
-    public function cancelOrder(int $orderId, ?int $userId = null, string $reason = ''): array
+    public function cancelOrderByUser(int $orderId, int $userId, string $reason): array
     {
         $reason = trim($reason);
-        if ($userId !== null && ($reason === '' || mb_strlen($reason) > 500)) {
+        if ($reason === '' || mb_strlen($reason) > 500) {
             return ['success' => false, 'message' => 'Vui lòng nhập lý do hủy từ 1 đến 500 ký tự.'];
         }
 
         $this->beginTransaction();
         try {
             $order = $this->fetch(
-                'SELECT user_id, voucher_id, order_status
-                 FROM orders
-                 WHERE id = :id
-                 FOR UPDATE',
+                'SELECT * FROM orders WHERE id = :id FOR UPDATE',
                 ['id' => $orderId]
             );
             if (!$order) {
                 throw new DomainException('Đơn hàng không tồn tại!');
             }
-            if ($userId !== null && (int)$order['user_id'] !== $userId) {
-                throw new DomainException('Bạn không có quyền thao tác trên đơn hàng này!');
+            if ((int)$order['user_id'] !== $userId) {
+                throw new DomainException('Bạn không có quyền thao tác đơn hàng này!');
             }
-            if (!in_array($order['order_status'], ['pending', 'confirmed'], true)) {
-                throw new DomainException('Chỉ có thể hủy đơn đang chờ xử lý hoặc đã xác nhận.');
+            if ($order['order_status'] === 'pending') {
+                $this->cancelAndRestock($orderId, (int)$order['voucher_id'], $reason);
+                $this->commit();
+                return ['success' => true, 'message' => 'Đơn hàng đã được hủy và số lượng đã hoàn lại kho.', 'direct' => true];
+            }
+            if ($order['order_status'] !== 'confirmed') {
+                throw new DomainException('Chỉ yêu cầu hủy khi đơn đang chờ xác nhận hoặc đã xác nhận.');
+            }
+            if (($order['cancellation_status'] ?? 'none') === 'pending') {
+                throw new DomainException('Yêu cầu hủy đơn đã được gửi và đang chờ quản trị viên duyệt.');
             }
 
-            if ($reason === '') {
-                $reason = 'Hủy bởi quản trị viên';
-            }
-            $updated = $this->query(
+            $this->query(
                 "UPDATE orders
-                 SET order_status = 'cancelled', cancellation_reason = :reason
-                 WHERE id = :id AND order_status IN ('pending', 'confirmed')",
+                 SET cancellation_status = 'pending', cancellation_reason = :reason,
+                     cancellation_rejection_reason = NULL, cancel_requested_at = NOW()
+                 WHERE id = :id",
                 ['reason' => $reason, 'id' => $orderId]
             );
-            if ($updated->rowCount() !== 1) {
-                throw new DomainException('Trạng thái đơn hàng đã thay đổi. Vui lòng tải lại trang.');
-            }
-
-            $items = $this->fetchAll(
-                'SELECT variant_id, SUM(quantity) AS quantity
-                 FROM order_items
-                 WHERE order_id = :order_id
-                 GROUP BY variant_id',
-                ['order_id' => $orderId]
-            );
-            $variantModel = new ProductVariant();
-            foreach ($items as $item) {
-                if (!empty($item['variant_id'])) {
-                    $variantModel->increaseStock((int)$item['variant_id'], (int)$item['quantity']);
-                }
-            }
-
-            if (!empty($order['voucher_id'])) {
-                (new Voucher())->refundUsage((int)$order['voucher_id']);
-            }
-
             $this->commit();
-            return ['success' => true, 'message' => 'Đã hủy đơn hàng thành công và hoàn trả số lượng vào kho!'];
+            return ['success' => true, 'message' => 'Đã gửi yêu cầu hủy đơn. Quản trị viên sẽ xác nhận hoặc từ chối.', 'direct' => false];
         } catch (DomainException $exception) {
-            if ($this->inTransaction()) {
-                $this->rollBack();
-            }
+            if ($this->inTransaction()) $this->rollBack();
             return ['success' => false, 'message' => $exception->getMessage()];
         } catch (Throwable $exception) {
-            if ($this->inTransaction()) {
-                $this->rollBack();
-            }
-            error_log('Order cancellation failed: ' . $exception->getMessage());
-            return ['success' => false, 'message' => 'Không thể hủy đơn hàng lúc này. Vui lòng thử lại.'];
+            if ($this->inTransaction()) $this->rollBack();
+            error_log('Customer cancellation failed: ' . $exception->getMessage());
+            return ['success' => false, 'message' => 'Không thể xử lý yêu cầu hủy lúc này.'];
         }
+    }
+
+    public function cancelOrderByAdmin(int $orderId, string $reason): array
+    {
+        $reason = trim($reason);
+        if ($reason === '' || mb_strlen($reason) > 500) {
+            return ['success' => false, 'message' => 'Vui lòng nhập lý do hủy từ 1 đến 500 ký tự.'];
+        }
+        $this->beginTransaction();
+        try {
+            $order = $this->fetch('SELECT * FROM orders WHERE id = :id FOR UPDATE', ['id' => $orderId]);
+            if (!$order) throw new DomainException('Đơn hàng không tồn tại!');
+            if (!in_array($order['order_status'], ['pending', 'confirmed', 'processing'], true)) {
+                throw new DomainException('Không thể hủy đơn đã giao hàng hoặc đã hủy.');
+            }
+            $this->cancelAndRestock($orderId, (int)$order['voucher_id'], $reason);
+            $this->query(
+                "UPDATE orders SET cancellation_status = 'approved', cancellation_rejection_reason = NULL WHERE id = :id",
+                ['id' => $orderId]
+            );
+            $this->commit();
+            return ['success' => true, 'message' => 'Đã hủy đơn hàng và hoàn trả số lượng vào kho!'];
+        } catch (DomainException $exception) {
+            if ($this->inTransaction()) $this->rollBack();
+            return ['success' => false, 'message' => $exception->getMessage()];
+        } catch (Throwable $exception) {
+            if ($this->inTransaction()) $this->rollBack();
+            error_log('Admin cancellation failed: ' . $exception->getMessage());
+            return ['success' => false, 'message' => 'Không thể hủy đơn hàng lúc này.'];
+        }
+    }
+
+    public function approveCancellation(int $orderId): array
+    {
+        $order = $this->fetch(
+            "SELECT cancellation_reason FROM orders WHERE id = :id AND cancellation_status = 'pending'",
+            ['id' => $orderId]
+        );
+        $reason = trim((string)($order['cancellation_reason'] ?? ''));
+        if ($reason === '') {
+            $reason = 'Quản trị viên đồng ý yêu cầu hủy đơn';
+        }
+        return $this->cancelOrderByAdmin($orderId, $reason);
+    }
+
+    public function rejectCancellation(int $orderId, string $reason): array
+    {
+        $reason = trim($reason);
+        if ($reason === '') return ['success' => false, 'message' => 'Vui lòng nhập lý do từ chối hủy.'];
+        $updated = $this->query(
+            "UPDATE orders
+             SET cancellation_status = 'rejected', cancellation_rejection_reason = :reason
+             WHERE id = :id AND cancellation_status = 'pending'",
+            ['reason' => $reason, 'id' => $orderId]
+        );
+        return $updated->rowCount() === 1
+            ? ['success' => true, 'message' => 'Đã từ chối yêu cầu hủy đơn.']
+            : ['success' => false, 'message' => 'Yêu cầu hủy không tồn tại hoặc đã được xử lý.'];
+    }
+
+    private function cancelAndRestock(int $orderId, int $voucherId, string $reason): void
+    {
+        $updated = $this->query(
+            "UPDATE orders
+             SET order_status = 'cancelled', cancellation_reason = :reason,
+                 cancellation_status = 'approved'
+             WHERE id = :id AND order_status IN ('pending','confirmed','processing')",
+            ['reason' => $reason, 'id' => $orderId]
+        );
+        if ($updated->rowCount() !== 1) {
+            throw new DomainException('Trạng thái đơn hàng đã thay đổi. Vui lòng tải lại trang.');
+        }
+        $items = $this->fetchAll(
+            'SELECT variant_id, SUM(quantity) AS quantity FROM order_items WHERE order_id = :order_id GROUP BY variant_id',
+            ['order_id' => $orderId]
+        );
+        $variantModel = new ProductVariant();
+        foreach ($items as $item) {
+            if (!empty($item['variant_id'])) {
+                $variantModel->increaseStock((int)$item['variant_id'], (int)$item['quantity']);
+            }
+        }
+        if ($voucherId > 0) (new Voucher())->refundUsage($voucherId);
+    }
+
+    public function confirmReceived(int $orderId, int $userId): array
+    {
+        $order = $this->fetch('SELECT * FROM orders WHERE id = :id', ['id' => $orderId]);
+        if (!$order) return ['success' => false, 'message' => 'Đơn hàng không tồn tại.'];
+        if ((int)$order['user_id'] !== $userId) return ['success' => false, 'message' => 'Bạn không có quyền thao tác đơn hàng này.'];
+        if ($order['order_status'] !== 'shipping') return ['success' => false, 'message' => 'Chỉ xác nhận nhận hàng khi đơn đang giao.'];
+        $updated = $this->query(
+            "UPDATE orders
+             SET order_status = 'completed', payment_status = CASE WHEN payment_status = 'unpaid' THEN 'paid' ELSE payment_status END,
+                 completed_at = NOW()
+             WHERE id = :id AND order_status = 'shipping'",
+            ['id' => $orderId]
+        );
+        return $updated->rowCount() === 1
+            ? ['success' => true, 'message' => 'Xác nhận đã nhận hàng thành công. Đơn đã được ghi nhận doanh thu.']
+            : ['success' => false, 'message' => 'Trạng thái đơn hàng đã thay đổi.'];
+    }
+
+    public function requestReturn(int $orderId, int $userId, string $reason, array $imagePaths): array
+    {
+        $reason = trim($reason);
+        if ($reason === '' || mb_strlen($reason) > 500) {
+            return ['success' => false, 'message' => 'Vui lòng nhập lý do đổi/trả từ 1 đến 500 ký tự.'];
+        }
+        if (empty($imagePaths)) {
+            return ['success' => false, 'message' => 'Vui lòng tải lên ít nhất một hình ảnh minh họa.'];
+        }
+        $order = $this->fetch('SELECT * FROM orders WHERE id = :id', ['id' => $orderId]);
+        if (!$order) return ['success' => false, 'message' => 'Đơn hàng không tồn tại.'];
+        if ((int)$order['user_id'] !== $userId) return ['success' => false, 'message' => 'Bạn không có quyền thao tác đơn hàng này.'];
+        if ($order['order_status'] !== 'shipping') return ['success' => false, 'message' => 'Chỉ yêu cầu đổi/trả khi đơn đang ở trạng thái giao hàng.'];
+        $updated = $this->query(
+            "UPDATE orders
+             SET order_status = 'return_requested', return_status = 'pending',
+                 return_reason = :reason, return_images = :images, return_rejection_reason = NULL
+             WHERE id = :id AND order_status = 'shipping'",
+            ['reason' => $reason, 'images' => json_encode($imagePaths, JSON_UNESCAPED_UNICODE), 'id' => $orderId]
+        );
+        return $updated->rowCount() === 1
+            ? ['success' => true, 'message' => 'Đã gửi yêu cầu đổi/trả. Quản trị viên sẽ xem xét thông tin bạn cung cấp.']
+            : ['success' => false, 'message' => 'Không thể gửi yêu cầu đổi/trả lúc này.'];
+    }
+
+    public function approveReturn(int $orderId): array
+    {
+        $updated = $this->query(
+            "UPDATE orders SET order_status = 'returned', return_status = 'approved'
+             WHERE id = :id AND order_status = 'return_requested' AND return_status = 'pending'",
+            ['id' => $orderId]
+        );
+        return $updated->rowCount() === 1
+            ? ['success' => true, 'message' => 'Đã đồng ý đổi/trả. Vui lòng chờ xác nhận đã nhận hàng trả lại.']
+            : ['success' => false, 'message' => 'Yêu cầu đổi/trả không tồn tại hoặc đã xử lý.'];
+    }
+
+    public function rejectReturn(int $orderId, string $reason): array
+    {
+        $reason = trim($reason);
+        if ($reason === '') return ['success' => false, 'message' => 'Vui lòng nhập lý do từ chối đổi/trả.'];
+        $updated = $this->query(
+            "UPDATE orders
+             SET order_status = 'shipping', return_status = 'rejected', return_rejection_reason = :reason
+             WHERE id = :id AND order_status = 'return_requested' AND return_status = 'pending'",
+            ['reason' => $reason, 'id' => $orderId]
+        );
+        return $updated->rowCount() === 1
+            ? ['success' => true, 'message' => 'Đã từ chối yêu cầu đổi/trả.']
+            : ['success' => false, 'message' => 'Yêu cầu đổi/trả không tồn tại hoặc đã xử lý.'];
+    }
+
+    public function confirmReturnReceived(int $orderId): array
+    {
+        $updated = $this->query(
+            "UPDATE orders
+             SET return_status = 'received', payment_status = 'refunded', return_received_at = NOW()
+             WHERE id = :id AND order_status = 'returned' AND return_status = 'approved'",
+            ['id' => $orderId]
+        );
+        if ($updated->rowCount() === 1) return ['success' => true, 'message' => 'Đã xác nhận nhận hàng trả lại.'];
+        return ['success' => false, 'message' => 'Chỉ xác nhận sau khi đã đồng ý yêu cầu đổi/trả.'];
     }
 
     public function hasUserPurchasedProduct(int $userId, int $productId): bool
@@ -293,7 +427,7 @@ class Order extends BaseModel
 
     public function getDashboardStats(): array
     {
-        $revenue = (float)$this->fetchColumn("SELECT SUM(total_amount) FROM orders WHERE order_status IN ('confirmed','shipping','completed')");
+        $revenue = (float)$this->fetchColumn("SELECT SUM(total_amount) FROM orders WHERE order_status = 'completed'");
         $totalOrders = (int)$this->fetchColumn("SELECT COUNT(*) FROM orders");
         $totalProducts = (int)$this->fetchColumn("SELECT COUNT(*) FROM products WHERE status = 'active'");
         $totalUsers = (int)$this->fetchColumn("SELECT COUNT(*) FROM users");
@@ -321,7 +455,7 @@ class Order extends BaseModel
     public function getRevenueByDays(int $days = 15): array
     {
         $sql = "SELECT DATE(created_at) AS order_date, 
-                       SUM(CASE WHEN order_status IN ('confirmed','shipping','completed') THEN total_amount ELSE 0 END) AS revenue,
+                       SUM(CASE WHEN order_status = 'completed' THEN total_amount ELSE 0 END) AS revenue,
                        COUNT(*) AS total_orders
                 FROM orders
                 WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
@@ -336,7 +470,7 @@ class Order extends BaseModel
     public function getRevenueByMonth(int $year): array
     {
         $sql = "SELECT MONTH(created_at) AS month, 
-                       SUM(CASE WHEN order_status IN ('confirmed','shipping','completed') THEN total_amount ELSE 0 END) AS revenue,
+                       SUM(CASE WHEN order_status = 'completed' THEN total_amount ELSE 0 END) AS revenue,
                        COUNT(*) AS total_orders
                 FROM orders
                 WHERE YEAR(created_at) = :year
@@ -369,7 +503,7 @@ class Order extends BaseModel
                 JOIN orders o ON oi.order_id = o.id
                 LEFT JOIN product_variants pv ON oi.variant_id = pv.id
                 LEFT JOIN product_images pi ON pv.product_id = pi.product_id AND pi.is_primary = 1
-                WHERE o.order_status IN ('confirmed','shipping','completed')
+                WHERE o.order_status = 'completed'
                 GROUP BY oi.product_name, oi.sku
                 ORDER BY total_sold DESC
                 LIMIT {$limit}";
@@ -389,7 +523,7 @@ class Order extends BaseModel
                 LEFT JOIN product_variants pv ON oi.variant_id = pv.id
                 LEFT JOIN product_categories pc ON pv.product_id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id
-                WHERE o.order_status IN ('confirmed','shipping','completed') AND c.name IS NOT NULL
+                WHERE o.order_status = 'completed' AND c.name IS NOT NULL
                 GROUP BY c.id, c.name
                 ORDER BY total_revenue DESC";
         return $this->fetchAll($sql);

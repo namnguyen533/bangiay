@@ -61,6 +61,8 @@ class Router
             'order-detail'  => (new OrderController())->detail(),
             'track-order'   => (new OrderController())->track(),
             'order-cancel'  => (new OrderController())->cancel(),
+            'order-confirm-received' => (new OrderController())->confirmReceived(),
+            'order-request-return' => (new OrderController())->requestReturn(),
 
             // Tài khoản
             'login'         => (new AuthController())->login(),
@@ -100,6 +102,11 @@ class Router
             'admin-orders'              => (new AdminOrderController())->index(),
             'admin-order-detail'        => (new AdminOrderController())->detail(),
             'admin-order-update-status' => (new AdminOrderController())->updateStatus(),
+            'admin-order-cancel-approve' => (new AdminOrderController())->approveCancellation(),
+            'admin-order-cancel-reject' => (new AdminOrderController())->rejectCancellation(),
+            'admin-order-return-approve' => (new AdminOrderController())->approveReturn(),
+            'admin-order-return-reject' => (new AdminOrderController())->rejectReturn(),
+            'admin-order-return-received' => (new AdminOrderController())->confirmReturnReceived(),
             'admin-order-print'         => (new AdminOrderController())->print(),
 
             'admin-vouchers'        => (new AdminVoucherController())->index(),

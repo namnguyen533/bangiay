@@ -16,7 +16,10 @@
                     'all'       => 'Tất cả',
                     'pending'   => 'Chờ xác nhận',
                     'confirmed' => 'Đã xác nhận',
+                    'processing' => 'Đang đóng gói',
                     'shipping'  => 'Đang giao',
+                    'return_requested' => 'Yêu cầu đổi/trả',
+                    'returned' => 'Đã trả hàng',
                     'completed' => 'Hoàn thành',
                     'cancelled' => 'Đã hủy',
                 ];
@@ -94,7 +97,7 @@
                                             <i class="fa-solid fa-print"></i>
                                         </a>
                                         <a href="<?= route_url('admin-order-detail', ['id' => $ord['id']]) ?>" class="btn btn-sm btn-outline-dark" title="Chi Tiết & Cập Nhật">
-                                            <i class="fa-solid fa-pen-to-square me-1"></i> Xử Lý
+                                            <i class="fa-solid fa-eye me-1"></i> Chi Tiết
                                         </a>
                                     </div>
                                 </td>

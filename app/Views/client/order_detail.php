@@ -61,6 +61,7 @@ $orderId = (int)($order['id'] ?? 0);
                     <?php if ($cancellationReason !== ''): ?>
                         <p class="small mb-0 mt-2"><strong>Lý do hủy:</strong> <?= nl2br($cancellationReason) ?></p>
                     <?php endif; ?>
+
                 </div>
             </div>
         <?php else: ?>
@@ -132,12 +133,25 @@ $orderId = (int)($order['id'] ?? 0);
                 </p>
             </div>
 
-            <!-- Nút Hủy Đơn Hàng Cho Khách (Khi Đơn Chưa Vận Chuyển) -->
+            <!-- Hủy đơn / yêu cầu hủy -->
             <?php if (auth() && in_array($orderStatus, ['pending', 'confirmed'], true)): ?>
                 <div id="cancel-order" class="bg-white p-4 rounded-4 border shadow-sm">
                     <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Hủy Đơn Hàng</h6>
-                    <p class="small text-secondary mb-3">Bạn có thể tự hủy đơn hàng khi đơn chưa được chuyển cho đơn vị vận chuyển. Toàn bộ sản phẩm sẽ được tự động hoàn lại số lượng vào kho.</p>
+                    <p class="small text-secondary mb-3">
+                        <?= $orderStatus === 'pending'
+                            ? 'Đơn chưa được xác nhận: bạn có thể hủy trực tiếp.'
+                            : 'Đơn đã được xác nhận: yêu cầu hủy cần quản trị viên chấp thuận.' ?>
+                    </p>
                     
+                    <?php if (($order['cancellation_status'] ?? 'none') === 'pending'): ?>
+                        <div class="alert alert-warning small mb-3">Yêu cầu hủy đang chờ quản trị viên xác nhận.</div>
+                    <?php elseif (($order['cancellation_status'] ?? 'none') === 'rejected'): ?>
+                        <div class="alert alert-danger small mb-3">
+                            Yêu cầu hủy bị từ chối:
+                            <?= nl2br(htmlspecialchars($order['cancellation_rejection_reason'] ?? '')) ?>
+                        </div>
+                    <?php endif; ?>
+
                     <form action="<?= route_url('order-cancel') ?>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?');">
                         <input type="hidden" name="id" value="<?= $orderId ?>">
                         <div class="mb-3">
@@ -149,6 +163,41 @@ $orderId = (int)($order['id'] ?? 0);
                         </button>
                     </form>
                 </div>
+            <?php endif; ?>
+
+            <?php if (auth() && $orderStatus === 'shipping'): ?>
+                <div class="bg-white p-4 rounded-4 border shadow-sm mt-4">
+                    <h6 class="fw-bold mb-3">Xác Nhận Khi Nhận Hàng</h6>
+                    <form action="<?= route_url('order-confirm-received') ?>" method="POST" class="mb-3" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng?');">
+                        <input type="hidden" name="id" value="<?= $orderId ?>">
+                        <button class="btn btn-success w-100 rounded-pill fw-bold">Xác nhận đã nhận được hàng</button>
+                    </form>
+
+                    <h6 class="fw-bold text-warning mb-2">Yêu cầu đổi/trả hàng</h6>
+                    <form action="<?= route_url('order-request-return') ?>" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="id" value="<?= $orderId ?>">
+                        <textarea name="reason" class="form-control form-control-sm mb-2" rows="3" maxlength="500" placeholder="Lý do đổi/trả hàng" required></textarea>
+                        <input type="file" name="images[]" class="form-control form-control-sm mb-2" accept="image/jpeg,image/png,image/webp" multiple required>
+                        <button class="btn btn-outline-warning w-100 rounded-pill fw-semibold">Gửi yêu cầu đổi/trả</button>
+                    </form>
+                    <?php if (($order['return_status'] ?? 'none') === 'rejected'): ?>
+                        <div class="alert alert-danger small mt-3 mb-0">
+                            Yêu cầu đổi/trả bị từ chối: <?= nl2br(htmlspecialchars($order['return_rejection_reason'] ?? '')) ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($orderStatus === 'return_requested'): ?>
+                <div class="alert alert-warning mt-4 mb-0">Yêu cầu đổi/trả đang chờ quản trị viên xem xét.</div>
+            <?php elseif ($orderStatus === 'returned'): ?>
+                <div class="alert alert-secondary mt-4 mb-0">
+                    <?= (($order['return_status'] ?? '') === 'received')
+                        ? 'Đơn đã được xác nhận trả hàng và hoàn tiền.'
+                        : 'Yêu cầu đổi/trả đã được đồng ý. Vui lòng chờ quản trị viên xác nhận đã nhận hàng.' ?>
+                </div>
+            <?php elseif ($orderStatus === 'completed'): ?>
+                <div class="alert alert-success mt-4 mb-0">Đơn hàng đã hoàn tất sau khi bạn xác nhận nhận hàng.</div>
             <?php endif; ?>
         </div>
 

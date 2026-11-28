@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Core\BaseController;
+use App\Core\OrderMailer;
 use App\Models\Order;
 
 class OrderController extends BaseController
@@ -52,16 +53,97 @@ class OrderController extends BaseController
         $paymentStatus = $_POST['payment_status'] ?? null;
 
         if ($id > 0) {
+            if ($status === 'cancelled') {
+                $reason = trim((string)($_POST['cancellation_reason'] ?? ''));
+                $result = $this->orderModel->cancelOrderByAdmin($id, $reason);
+                if (!$result['success']) {
+                    set_flash('error', $result['message'], 'danger');
+                    $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+                }
+                $order = $this->orderModel->getDetail($id);
+                if ($order) OrderMailer::sendToUser($order, 'Đơn hàng đã bị hủy #' . $order['order_code'], 'Đơn hàng của bạn đã bị quản trị viên hủy.', $reason);
+                set_flash('success', $result['message'], 'success');
+                $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+            }
+
+            $before = $this->orderModel->getDetail($id);
             if (!$this->orderModel->updateStatus($id, $status)) {
-                set_flash('error', 'Không thể cập nhật đơn hàng không tồn tại hoặc đã hủy.', 'danger');
+                set_flash('error', 'Chỉ có thể chuyển trạng thái đơn hàng theo từng bước.', 'danger');
             } else {
                 if ($paymentStatus) {
                     $this->orderModel->updatePaymentStatus($id, $paymentStatus);
                 }
+                $after = $this->orderModel->getDetail($id);
+                if ($after) OrderMailer::sendToUser(
+                    $after,
+                    'Cập nhật đơn hàng #' . $after['order_code'],
+                    'Trạng thái đơn hàng của bạn đã được thay đổi từ "' . order_status_label((string)($before['order_status'] ?? 'pending')) . '" sang "' . order_status_label($status) . '".'
+                );
                 set_flash('success', 'Đã cập nhật trạng thái đơn hàng thành công!', 'success');
             }
         }
 
+        $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+    }
+
+    public function approveCancellation(): void
+    {
+        $this->requireAdmin();
+        $id = (int)($_POST['id'] ?? 0);
+        $result = $this->orderModel->approveCancellation($id);
+        $order = $this->orderModel->getDetail($id);
+        if ($order) {
+            OrderMailer::sendToUser($order, 'Yêu cầu hủy đơn được chấp nhận #' . $order['order_code'], 'Quản trị viên đã đồng ý yêu cầu hủy đơn hàng của bạn.');
+        }
+        set_flash($result['success'] ? 'success' : 'error', $result['message'], $result['success'] ? 'success' : 'danger');
+        $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+    }
+
+    public function rejectCancellation(): void
+    {
+        $this->requireAdmin();
+        $id = (int)($_POST['id'] ?? 0);
+        $reason = trim((string)($_POST['reason'] ?? ''));
+        $result = $this->orderModel->rejectCancellation($id, $reason);
+        $order = $this->orderModel->getDetail($id);
+        if ($order) {
+            OrderMailer::sendToUser($order, 'Yêu cầu hủy đơn bị từ chối #' . $order['order_code'], 'Quản trị viên đã từ chối yêu cầu hủy đơn hàng của bạn.', $reason);
+        }
+        set_flash($result['success'] ? 'success' : 'error', $result['message'], $result['success'] ? 'success' : 'danger');
+        $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+    }
+
+    public function approveReturn(): void
+    {
+        $this->requireAdmin();
+        $id = (int)($_POST['id'] ?? 0);
+        $result = $this->orderModel->approveReturn($id);
+        $order = $this->orderModel->getDetail($id);
+        if ($order) OrderMailer::sendToUser($order, 'Yêu cầu đổi/trả được chấp nhận #' . $order['order_code'], 'Quản trị viên đã đồng ý yêu cầu đổi/trả của bạn.');
+        set_flash($result['success'] ? 'success' : 'error', $result['message'], $result['success'] ? 'success' : 'danger');
+        $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+    }
+
+    public function rejectReturn(): void
+    {
+        $this->requireAdmin();
+        $id = (int)($_POST['id'] ?? 0);
+        $reason = trim((string)($_POST['reason'] ?? ''));
+        $result = $this->orderModel->rejectReturn($id, $reason);
+        $order = $this->orderModel->getDetail($id);
+        if ($order) OrderMailer::sendToUser($order, 'Yêu cầu đổi/trả bị từ chối #' . $order['order_code'], 'Quản trị viên đã từ chối yêu cầu đổi/trả của bạn.', $reason);
+        set_flash($result['success'] ? 'success' : 'error', $result['message'], $result['success'] ? 'success' : 'danger');
+        $this->redirect(route_url('admin-order-detail', ['id' => $id]));
+    }
+
+    public function confirmReturnReceived(): void
+    {
+        $this->requireAdmin();
+        $id = (int)($_POST['id'] ?? 0);
+        $result = $this->orderModel->confirmReturnReceived($id);
+        $order = $this->orderModel->getDetail($id);
+        if ($order) OrderMailer::sendToUser($order, 'Đã nhận hàng trả lại #' . $order['order_code'], 'Quản trị viên đã xác nhận nhận lại hàng trả. Tiền sẽ được hoàn theo chính sách.');
+        set_flash($result['success'] ? 'success' : 'error', $result['message'], $result['success'] ? 'success' : 'danger');
         $this->redirect(route_url('admin-order-detail', ['id' => $id]));
     }
 

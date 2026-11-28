@@ -50,15 +50,31 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Trạng Thái Đơn Hàng</label>
                         <select name="order_status" class="form-select">
-                            <option value="pending" <?= ($order['order_status'] === 'pending') ? 'selected' : '' ?>>Chờ xác nhận (Pending)</option>
-                            <option value="confirmed" <?= ($order['order_status'] === 'confirmed') ? 'selected' : '' ?>>Đã xác nhận / Duyệt đơn (Confirmed)</option>
-                            <option value="processing" <?= ($order['order_status'] === 'processing') ? 'selected' : '' ?>>Đang đóng gói kho (Processing)</option>
-                            <option value="shipping" <?= ($order['order_status'] === 'shipping') ? 'selected' : '' ?>>Đang giao hàng (Shipping)</option>
-                            <option value="completed" <?= ($order['order_status'] === 'completed') ? 'selected' : '' ?>>Đã giao thành công (Completed)</option>
-                            <option value="cancelled" <?= ($order['order_status'] === 'cancelled') ? 'selected' : '' ?>>Hủy đơn hàng (Cancelled - Hoàn kho)</option>
+                            <option value="pending" <?= ($order['order_status'] === 'pending') ? 'selected' : '' ?>>Chờ xác nhận</option>
+                            <option value="confirmed" <?= ($order['order_status'] === 'confirmed') ? 'selected' : '' ?>>Đã xác nhận</option>
+                            <option value="processing" <?= ($order['order_status'] === 'processing') ? 'selected' : '' ?>>Đang đóng gói</option>
+                            <option value="shipping" <?= ($order['order_status'] === 'shipping') ? 'selected' : '' ?>>Đang giao hàng</option>
+                            <?php if ($order['order_status'] === 'completed'): ?>
+                                <option value="completed" selected>Đã hoàn tất (do khách xác nhận)</option>
+                            <?php endif; ?>
+                            <?php if ($order['order_status'] === 'returned'): ?>
+                                <option value="returned" selected>Đã trả hàng</option>
+                            <?php endif; ?>
                         </select>
-                        <small class="text-muted d-block mt-1">Khi chọn "Hủy đơn hàng", hệ thống sẽ tự động hoàn trả số lượng giày vào kho.</small>
+                        <small class="text-muted d-block mt-1">Chỉ chuyển từng bước: chờ xác nhận → xác nhận → đóng gói → giao hàng.</small>
                     </div>
+
+                    <?php if (in_array($order['order_status'], ['pending','confirmed','processing'], true)): ?>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Lý do hủy (nếu hủy đơn)</label>
+                            <textarea name="cancellation_reason" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Bắt buộc nếu hủy đơn"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" name="order_status" value="cancelled" class="btn btn-outline-danger w-100 rounded-pill fw-bold">
+                                <i class="fa-solid fa-ban me-1"></i> Hủy Đơn Hàng
+                            </button>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Trạng Thái Thanh Toán</label>
@@ -75,6 +91,60 @@
                     </button>
                 </form>
             </div>
+
+            <?php if (($order['cancellation_status'] ?? 'none') === 'pending'): ?>
+                <div class="bg-white p-4 rounded-4 border shadow-sm mt-4">
+                    <h5 class="fw-bold text-danger mb-3">Yêu Cầu Hủy Đơn Của Khách</h5>
+                    <p class="small"><strong>Lý do:</strong> <?= nl2br(htmlspecialchars($order['cancellation_reason'])) ?></p>
+                    <div class="d-flex gap-2">
+                        <form action="<?= route_url('admin-order-cancel-approve') ?>" method="POST" class="flex-grow-1">
+                            <input type="hidden" name="id" value="<?= $order['id'] ?>">
+                            <button class="btn btn-danger w-100 rounded-pill" onclick="return confirm('Đồng ý hủy đơn và hoàn kho?');">Đồng ý hủy</button>
+                        </form>
+                        <form action="<?= route_url('admin-order-cancel-reject') ?>" method="POST" class="flex-grow-1">
+                            <input type="hidden" name="id" value="<?= $order['id'] ?>">
+                            <input name="reason" class="form-control form-control-sm mb-2" placeholder="Lý do từ chối" maxlength="500" required>
+                            <button class="btn btn-outline-secondary w-100 rounded-pill">Từ chối hủy</button>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (($order['return_status'] ?? 'none') === 'pending'): ?>
+                <div class="bg-white p-4 rounded-4 border shadow-sm mt-4">
+                    <h5 class="fw-bold text-warning mb-3">Yêu Cầu Đổi/Trả Hàng</h5>
+                    <p class="small"><strong>Lý do:</strong> <?= nl2br(htmlspecialchars($order['return_reason'] ?? '')) ?></p>
+                    <?php $returnImages = json_decode($order['return_images'] ?? '[]', true); ?>
+                    <?php if (is_array($returnImages)): ?>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <?php foreach ($returnImages as $path): ?>
+                                <a href="<?= htmlspecialchars(image_src($path)) ?>" target="_blank">
+                                    <img src="<?= htmlspecialchars(image_src($path)) ?>" class="rounded border" style="width:90px;height:90px;object-fit:cover">
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                    <form action="<?= route_url('admin-order-return-approve') ?>" method="POST" class="mb-2">
+                        <input type="hidden" name="id" value="<?= $order['id'] ?>">
+                        <button class="btn btn-warning w-100 rounded-pill fw-bold">Đồng ý đổi/trả</button>
+                    </form>
+                    <form action="<?= route_url('admin-order-return-reject') ?>" method="POST">
+                        <input type="hidden" name="id" value="<?= $order['id'] ?>">
+                        <input name="reason" class="form-control form-control-sm mb-2" placeholder="Lý do từ chối đổi/trả" maxlength="500" required>
+                        <button class="btn btn-outline-secondary w-100 rounded-pill">Từ chối đổi/trả</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if (($order['return_status'] ?? 'none') === 'approved'): ?>
+                <div class="bg-white p-4 rounded-4 border shadow-sm mt-4">
+                    <h5 class="fw-bold mb-3">Xác Nhận Nhận Hàng Trả</h5>
+                    <form action="<?= route_url('admin-order-return-received') ?>" method="POST">
+                        <input type="hidden" name="id" value="<?= $order['id'] ?>">
+                        <button class="btn btn-dark w-100 rounded-pill" onclick="return confirm('Xác nhận đã nhận hàng trả lại?');">Xác nhận đã nhận hàng</button>
+                    </form>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Danh Sách Sản Phẩm Trong Đơn -->
