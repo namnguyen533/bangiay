@@ -79,11 +79,9 @@
                                 <td>
                                     <div class="small">
                                         <span class="badge bg-light text-dark border"><?= strtoupper($ord['payment_method']) ?></span>
-                                        <?php if ($ord['payment_status'] === 'paid'): ?>
-                                            <span class="badge bg-success-subtle text-success ms-1">Đã TT</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning-subtle text-dark ms-1">Chưa TT</span>
-                                        <?php endif; ?>
+                                        <span class="badge <?= $ord['payment_status'] === 'paid' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-dark' ?> ms-1">
+                                            <?= payment_status_label($ord['payment_status']) ?>
+                                        </span>
                                     </div>
                                 </td>
                                 <td>

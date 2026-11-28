@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 use App\Models\Cart;
 $cartModel = new Cart();
 $cartCount = $cartModel->getTotalQuantity();
