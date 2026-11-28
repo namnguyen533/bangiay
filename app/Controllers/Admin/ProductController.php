@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 use App\Core\BaseController;
 use App\Core\DescriptionSanitizer;
 use App\Core\ImageUploader;
+use App\Core\ProductVideoUploader;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -68,8 +69,10 @@ class ProductController extends BaseController
         }
 
         $uploadedImages = [];
+        $uploadedVideo = null;
         try {
             $uploadedImages = ImageUploader::storeMany($_FILES['images'] ?? []);
+            $uploadedVideo = ProductVideoUploader::store($_FILES['rotation_video'] ?? []);
             $this->productModel->beginTransaction();
             $slug = $this->makeSlug($name);
             $productId = $this->productModel->createProduct([
@@ -80,15 +83,24 @@ class ProductController extends BaseController
                 'status' => 'active',
             ], $categoryId, array_merge($imageUrl !== '' ? [$imageUrl] : [], $imageUrls));
             $this->productModel->addImages($productId, $uploadedImages);
+            if ($uploadedVideo !== null) {
+                $this->productModel->replaceRotationVideo($productId, $uploadedVideo);
+            }
             $this->saveVariants($productId, $this->submittedVariants());
             $this->productModel->commit();
         } catch (InvalidArgumentException | RuntimeException $exception) {
             $this->rollbackIfActive();
             $this->deleteUploadedFiles($uploadedImages);
+            if ($uploadedVideo !== null) {
+                ProductVideoUploader::delete($uploadedVideo);
+            }
             $this->fail($exception->getMessage(), 'admin-product-create');
         } catch (PDOException $exception) {
             $this->rollbackIfActive();
             $this->deleteUploadedFiles($uploadedImages);
+            if ($uploadedVideo !== null) {
+                ProductVideoUploader::delete($uploadedVideo);
+            }
             error_log('Product creation failed: ' . $exception->getMessage());
             $this->fail('Không thể lưu sản phẩm. Kiểm tra mã SKU và cấu trúc cơ sở dữ liệu rồi thử lại.', 'admin-product-create');
         }
@@ -144,9 +156,12 @@ class ProductController extends BaseController
         }
 
         $uploadedImages = [];
+        $uploadedVideo = null;
         $removedImagePaths = [];
+        $removedVideoPath = null;
         try {
             $uploadedImages = ImageUploader::storeMany($_FILES['images'] ?? []);
+            $uploadedVideo = ProductVideoUploader::store($_FILES['rotation_video'] ?? []);
             $this->productModel->beginTransaction();
             $this->productModel->updateProduct($id, [
                 'brand_id' => $brandId,
@@ -168,15 +183,26 @@ class ProductController extends BaseController
                 $this->productModel->addImages($id, $newImageUrls);
             }
             $this->productModel->addImages($id, $uploadedImages);
+            if ($uploadedVideo !== null) {
+                $removedVideoPath = $this->productModel->replaceRotationVideo($id, $uploadedVideo);
+            } elseif (!empty($_POST['remove_rotation_video'])) {
+                $removedVideoPath = $this->productModel->removeRotationVideo($id);
+            }
             $this->saveVariants($id, $this->submittedVariants());
             $this->productModel->commit();
         } catch (InvalidArgumentException | RuntimeException $exception) {
             $this->rollbackIfActive();
             $this->deleteUploadedFiles($uploadedImages);
+            if ($uploadedVideo !== null) {
+                ProductVideoUploader::delete($uploadedVideo);
+            }
             $this->fail($exception->getMessage(), 'admin-product-edit', ['id' => $id]);
         } catch (PDOException $exception) {
             $this->rollbackIfActive();
             $this->deleteUploadedFiles($uploadedImages);
+            if ($uploadedVideo !== null) {
+                ProductVideoUploader::delete($uploadedVideo);
+            }
             error_log('Product update failed: ' . $exception->getMessage());
             $this->fail('Không thể cập nhật sản phẩm. Kiểm tra SKU và dữ liệu rồi thử lại.', 'admin-product-edit', ['id' => $id]);
         }
@@ -184,7 +210,10 @@ class ProductController extends BaseController
         foreach ($removedImagePaths as $path) {
             ImageUploader::delete($path);
         }
-        set_flash('success', 'Đã cập nhật thông tin, ảnh và biến thể sản phẩm.', 'success');
+        if ($removedVideoPath !== null) {
+            ProductVideoUploader::delete($removedVideoPath);
+        }
+        set_flash('success', 'Đã cập nhật thông tin, ảnh/video và biến thể sản phẩm.', 'success');
         $this->redirect(route_url('admin-products'));
     }
 

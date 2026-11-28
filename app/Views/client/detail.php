@@ -3,6 +3,7 @@
     $hasProductImage = !empty($product['image_url']);
     $mainImageUrl = $hasProductImage ? $product['image_url'] : 'uploads/products/no-product-image.svg';
     $mainImageAlt = $product['image_alt_text'] ?: ($hasProductImage ? $product['name'] : 'Ảnh sản phẩm chưa được cập nhật');
+    $hasRotationVideo = !empty($product['rotation_video_path']);
     ?>
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
@@ -14,36 +15,42 @@
     </nav>
 
     <div class="row g-4 g-lg-5">
-        <!-- Cột Gallery Ảnh Sản Phẩm -->
+        <!-- Cột Gallery Ảnh / Video Sản Phẩm -->
         <div class="col-lg-6">
-            <div id="product3dStage" class="product-3d-stage bg-white p-3 rounded-4 border shadow-sm mb-2 text-center position-relative overflow-hidden">
+            <div id="productMediaStage" class="product-media-stage bg-white p-3 rounded-4 border shadow-sm mb-2 text-center position-relative overflow-hidden">
+                <?php if ($hasRotationVideo): ?>
+                    <video id="productRotationVideo"
+                           class="product-media-content rounded-3"
+                           autoplay
+                           muted
+                           loop
+                           playsinline
+                           controls
+                           preload="metadata"
+                           aria-label="Video xoay sản phẩm">
+                        <source src="<?= htmlspecialchars(image_src($product['rotation_video_path'])) ?>" type="video/mp4">
+                        Trình duyệt của bạn không hỗ trợ phát video.
+                    </video>
+                <?php endif; ?>
                 <img id="mainProductImg"
                      src="<?= htmlspecialchars(image_src($mainImageUrl)) ?>"
                      alt="<?= htmlspecialchars($mainImageAlt) ?>"
-                     class="img-fluid rounded-3 main-image-zoom"
+                     class="product-media-content rounded-3"
+                     <?= $hasRotationVideo ? 'hidden' : '' ?>
                      draggable="false">
+                <?php if ($hasRotationVideo): ?>
+                    <button id="productMediaToggle" type="button" class="btn btn-dark btn-sm rounded-pill position-absolute bottom-0 end-0 m-4">
+                        Xem ảnh
+                    </button>
+                <?php endif; ?>
                 <?php if (!empty($product['brand_name'])): ?>
                     <span class="badge-brand"><?= htmlspecialchars($product['brand_name']) ?></span>
                 <?php endif; ?>
             </div>
-            <div class="product-3d-controls bg-white border rounded-4 p-3 mb-2">
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                    <span class="small fw-semibold text-dark"><i class="fa-solid fa-cube me-1 text-danger"></i> Xoay xem sản phẩm</span>
-                    <div class="d-flex gap-2">
-                        <button id="product3dSpin" type="button" class="btn btn-sm btn-outline-dark rounded-pill">
-                            <i class="fa-solid fa-rotate me-1"></i> Tự xoay
-                        </button>
-                        <button id="product3dReset" type="button" class="btn btn-sm btn-light rounded-pill" aria-label="Đặt lại góc xoay">
-                            Đặt lại
-                        </button>
-                    </div>
-                </div>
-                <input id="product3dAngle" class="form-range mb-1" type="range" min="0" max="360" value="0" aria-label="Góc xoay ảnh sản phẩm">
-                <div class="d-flex justify-content-between small text-secondary">
-                    <span>Kéo trực tiếp ảnh hoặc thanh trượt để xoay</span>
-                    <span id="product3dAngleLabel" aria-live="polite">0°</span>
-                </div>
-                <p class="small text-secondary mb-0 mt-2">Hiệu ứng 3D mô phỏng từ ảnh hiện có; muốn xem chính xác mặt sau cần ảnh nhiều góc hoặc mô hình 3D.</p>
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                <p id="productMediaStatus" class="small text-secondary mb-0" aria-live="polite">
+                    <?= $hasRotationVideo ? 'Video xoay tự phát lặp lại; dùng nút điều khiển để tạm dừng.' : 'Sản phẩm chưa có video xoay; ảnh được hiển thị tĩnh.' ?>
+                </p>
             </div>
             <p id="galleryImageCaption" class="small text-secondary mb-2">
                 <?= htmlspecialchars($mainImageAlt) ?>
@@ -502,30 +509,20 @@
 </div>
 
 <style>
-    .product-3d-stage {
+    .product-media-stage {
         min-height: 420px;
         display: flex;
         align-items: center;
         justify-content: center;
-        perspective: 1100px;
-        touch-action: pan-y;
-        cursor: grab;
     }
-    .product-3d-stage.is-dragging {
-        cursor: grabbing;
-    }
-    .product-3d-stage #mainProductImg {
+    .product-media-content {
         width: 100%;
         max-height: 450px;
         object-fit: contain;
-        transform: rotateY(0deg);
-        transform-style: preserve-3d;
-        transition: transform 0.12s ease-out, opacity 0.15s ease;
         user-select: none;
-        -webkit-user-drag: none;
     }
-    .product-3d-stage.is-dragging #mainProductImg {
-        transition: none;
+    .product-media-content[hidden] {
+        display: none !important;
     }
 </style>
 
@@ -536,12 +533,26 @@ function changeGalleryImage(wrapper, imgUrl) {
     const mainImg = document.getElementById('mainProductImg');
     if (!mainImg) return;
 
+    const rotationVideo = document.getElementById('productRotationVideo');
+    const mediaToggle = document.getElementById('productMediaToggle');
+    if (rotationVideo) {
+        rotationVideo.pause();
+        rotationVideo.hidden = true;
+        mainImg.hidden = false;
+        const mediaStatus = document.getElementById('productMediaStatus');
+        if (mediaStatus) {
+            mediaStatus.textContent = 'Đang xem ảnh sản phẩm.';
+        }
+        if (mediaToggle) {
+            mediaToggle.textContent = 'Xem video xoay';
+        }
+    }
+
     mainImg.style.opacity = '0.4';
     setTimeout(() => {
         mainImg.src = imgUrl;
         mainImg.alt = wrapper.dataset.imageAlt || mainImg.alt;
         mainImg.style.opacity = '1';
-        setProductImageAngle(0);
     }, 150);
     const caption = document.getElementById('galleryImageCaption');
     if (caption) {
@@ -562,85 +573,29 @@ document.querySelectorAll('.thumbnail-wrapper').forEach(wrapper => {
     });
 });
 
-// Xoay ảnh quanh trục dọc để tạo hiệu ứng xem 3D từ một ảnh sản phẩm.
-const product3dStage = document.getElementById('product3dStage');
-const product3dImage = document.getElementById('mainProductImg');
-const product3dAngle = document.getElementById('product3dAngle');
-const product3dAngleLabel = document.getElementById('product3dAngleLabel');
-const product3dSpin = document.getElementById('product3dSpin');
-const product3dReset = document.getElementById('product3dReset');
-let productImageRotation = 0;
-let productSpinFrame = null;
-let productLastPointerX = null;
+const productRotationVideo = document.getElementById('productRotationVideo');
+const mainProductImage = document.getElementById('mainProductImg');
+const productMediaToggle = document.getElementById('productMediaToggle');
+if (productRotationVideo && mainProductImage && productMediaToggle) {
+    productMediaToggle.addEventListener('click', () => {
+        const showVideo = productRotationVideo.hidden;
+        productRotationVideo.hidden = !showVideo;
+        mainProductImage.hidden = showVideo;
+        productMediaToggle.textContent = showVideo ? 'Xem ảnh' : 'Xem video xoay';
+        const mediaStatus = document.getElementById('productMediaStatus');
 
-function setProductImageAngle(angle) {
-    if (!product3dImage || !product3dAngle || !product3dAngleLabel) return;
-    productImageRotation = ((angle % 360) + 360) % 360;
-    product3dImage.style.transform = `rotateY(${productImageRotation}deg)`;
-    product3dAngle.value = Math.round(productImageRotation);
-    product3dAngleLabel.textContent = `${Math.round(productImageRotation)}°`;
-}
-
-function stopProductImageSpin() {
-    if (productSpinFrame !== null) {
-        cancelAnimationFrame(productSpinFrame);
-        productSpinFrame = null;
-    }
-    if (product3dSpin) {
-        product3dSpin.setAttribute('aria-pressed', 'false');
-        product3dSpin.innerHTML = '<i class="fa-solid fa-rotate me-1"></i> Tự xoay';
-    }
-}
-
-if (product3dStage && product3dImage && product3dAngle) {
-    let previousSpinTime = 0;
-    const spinFrame = (time) => {
-        if (productSpinFrame === null) return;
-        if (previousSpinTime) {
-            setProductImageAngle(productImageRotation + (time - previousSpinTime) * 0.045);
+        if (showVideo) {
+            mediaStatus.textContent = 'Video xoay tự phát lặp lại; dùng nút điều khiển để tạm dừng.';
+            const playback = productRotationVideo.play();
+            if (playback) {
+                playback.catch(() => {
+                    mediaStatus.textContent = 'Video chưa tự phát được; nhấn nút phát trên video để xem.';
+                });
+            }
+        } else {
+            productRotationVideo.pause();
+            mediaStatus.textContent = 'Đang xem ảnh sản phẩm.';
         }
-        previousSpinTime = time;
-        productSpinFrame = requestAnimationFrame(spinFrame);
-    };
-
-    product3dStage.addEventListener('pointerdown', (event) => {
-        if (event.target.closest('button')) return;
-        stopProductImageSpin();
-        productLastPointerX = event.clientX;
-        product3dStage.classList.add('is-dragging');
-        product3dStage.setPointerCapture(event.pointerId);
-    });
-
-    product3dStage.addEventListener('pointermove', (event) => {
-        if (productLastPointerX === null) return;
-        const deltaX = event.clientX - productLastPointerX;
-        productLastPointerX = event.clientX;
-        setProductImageAngle(productImageRotation + deltaX * 0.8);
-    });
-
-    const finishProductImageDrag = () => {
-        productLastPointerX = null;
-        product3dStage.classList.remove('is-dragging');
-    };
-    product3dStage.addEventListener('pointerup', finishProductImageDrag);
-    product3dStage.addEventListener('pointercancel', finishProductImageDrag);
-    product3dAngle.addEventListener('input', () => {
-        stopProductImageSpin();
-        setProductImageAngle(Number(product3dAngle.value));
-    });
-    product3dSpin.addEventListener('click', () => {
-        if (productSpinFrame !== null) {
-            stopProductImageSpin();
-            return;
-        }
-        previousSpinTime = 0;
-        product3dSpin.setAttribute('aria-pressed', 'true');
-        product3dSpin.innerHTML = '<i class="fa-solid fa-pause me-1"></i> Dừng xoay';
-        productSpinFrame = requestAnimationFrame(spinFrame);
-    });
-    product3dReset.addEventListener('click', () => {
-        stopProductImageSpin();
-        setProductImageAngle(0);
     });
 }
 

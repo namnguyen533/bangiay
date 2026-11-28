@@ -54,6 +54,23 @@
                         <label class="form-label fw-bold">Thêm ảnh (tối đa 8 ảnh, 5 MB/ảnh)</label>
                         <input type="file" name="images[]" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
                     </div>
+                    <?php if (!empty($product['rotation_video_path'])): ?>
+                        <div class="mb-3 border rounded-3 p-3">
+                            <label class="form-label fw-bold">Video xoay hiện tại</label>
+                            <video class="w-100 rounded-2 mb-2" controls muted playsinline preload="metadata" style="max-height:220px">
+                                <source src="<?= htmlspecialchars(image_src($product['rotation_video_path'])) ?>" type="video/mp4">
+                            </video>
+                            <label class="form-check small">
+                                <input class="form-check-input" type="checkbox" name="remove_rotation_video" value="1">
+                                <span class="form-check-label">Gỡ video hiện tại</span>
+                            </label>
+                        </div>
+                    <?php endif; ?>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold"><?= !empty($product['rotation_video_path']) ? 'Thay video xoay (MP4, tối đa 50 MB)' : 'Thêm video xoay (MP4, tối đa 50 MB)' ?></label>
+                        <input type="file" name="rotation_video" class="form-control" accept="video/mp4,.mp4">
+                        <div class="form-text">Video mới sẽ thay video hiện tại và tự phát lặp lại ở trang chi tiết.</div>
+                    </div>
                     <div class="row g-3">
                         <?php foreach ($product['images'] as $image): ?>
                             <div class="col-6 col-md-4">

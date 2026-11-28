@@ -48,3 +48,11 @@ CREATE TABLE IF NOT EXISTS `product_reviews` (
   UNIQUE KEY `uq_product_review_user` (`product_id`, `user_id`),
   INDEX `idx_review_status_created` (`status`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `product_rotation_videos` (
+  `product_id` BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  `video_path` VARCHAR(255) NOT NULL,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_product_rotation_video_product`
+    FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

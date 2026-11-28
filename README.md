@@ -103,7 +103,7 @@ Nhấp đúp vào file `chay_web.bat` trong thư mục dự án. Trình duyệt 
 ### Cách 2: Chạy trực tiếp qua Laragon (Khuyên dùng)
 1. Bật **Laragon** (Start All: Apache & MySQL).
 2. Đảm bảo database `bangiay2` đã có các bảng nền của ứng dụng (`users`, `products`, `product_variants`, `categories`, `brands` và các bảng đơn hàng).
-3. Import file `database/feature_migration.sql` vào database `bangiay2` một lần để tạo bảng phiếu nhập kho và đánh giá. File migration không xóa hoặc sửa dữ liệu hiện có.
+3. Import file `database/feature_migration.sql` vào database `bangiay2` một lần để tạo bảng phiếu nhập kho, đánh giá và video xoay sản phẩm. File migration không xóa hoặc sửa dữ liệu hiện có.
 4. Import file `database/order_cancellation_migration.sql` để thêm cột lưu lý do khách hủy đơn; có thể chạy lại an toàn.
 5. Import file `database/wishlist_migration.sql` để tạo bảng sản phẩm yêu thích nếu database chưa có bảng này; có thể chạy lại an toàn.
 6. Import file `database/product_gallery_demo_migration.sql` để làm mới gallery của 8 sản phẩm mẫu bằng các ảnh đã xác minh đúng mẫu và màu; có thể chạy lại an toàn. Sản phẩm chưa có ảnh phù hợp sẽ hiện ảnh chờ cập nhật, không dùng ảnh sneaker ngẫu nhiên.
@@ -128,7 +128,8 @@ C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe -S localhost:8000
 
 - Danh mục hỗ trợ cây nhiều cấp; thương hiệu và danh mục được dùng trực tiếp trong bộ lọc cửa hàng và biểu mẫu sản phẩm.
 - Thanh tìm kiếm gợi ý cả thương hiệu và giày theo tên hoặc SKU; chọn thương hiệu để lọc danh sách, chọn giày để mở chi tiết, hoặc xem toàn bộ kết quả và tiếp tục lọc theo size/giá.
-- Sản phẩm có thể tải tối đa 8 ảnh JPG/PNG/WebP (5 MB/ảnh), quản lý mô tả và nhiều biến thể size/màu với giá riêng; SKU được tạo tự động nếu để trống.
+- Sản phẩm có thể tải tối đa 8 ảnh JPG/PNG/WebP (5 MB/ảnh) và một video MP4 (50 MB) để phát tự động lặp lại ở trang chi tiết; quản lý mô tả và nhiều biến thể size/màu với giá riêng.
+- Video xoay do quản trị viên tải lên riêng cho từng sản phẩm; khi chưa có video, trang chi tiết chỉ hiển thị ảnh tĩnh, không giả lập xoay từ một ảnh.
 - Tồn kho chỉ tăng qua phiếu nhập theo từng SKU. Biến thể có tồn không quá 5 đôi được cảnh báo sắp hết; xóa sản phẩm sẽ chuyển sang ẩn để giữ lịch sử kho/đơn.
 - Khách hàng xem lịch sử đơn trong mục **Đơn hàng của tôi** và có thể hủy đơn đang chờ xử lý hoặc đã xác nhận bằng cách nhập lý do. Khi hủy thành công, tồn kho được hoàn lại; đơn đang giao hoặc đã hoàn tất không thể hủy.
 - Khách hàng đăng nhập để gửi một đánh giá cho mỗi sản phẩm. Đánh giá chờ duyệt; quản trị viên có thể hiển thị, ẩn và phản hồi. Đánh giá được duyệt xuất hiện ở trang chi tiết sản phẩm.

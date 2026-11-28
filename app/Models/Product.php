@@ -191,11 +191,55 @@ class Product extends BaseModel
         $sqlImages = "SELECT * FROM product_images WHERE product_id = :product_id ORDER BY is_primary DESC, sort_order ASC, id ASC";
         $product['images'] = $this->fetchAll($sqlImages, ['product_id' => $id]);
 
+        $rotationVideo = $this->fetch(
+            'SELECT video_path FROM product_rotation_videos WHERE product_id = :product_id',
+            ['product_id' => $id]
+        );
+        $product['rotation_video_path'] = $rotationVideo['video_path'] ?? null;
+
         // Lấy các biến thể (size, color, price, sale_price, stock)
         $sqlVariants = "SELECT * FROM product_variants WHERE product_id = :product_id AND status = 'active' ORDER BY size ASC";
         $product['variants'] = $this->fetchAll($sqlVariants, ['product_id' => $id]);
 
         return $product;
+    }
+
+    public function replaceRotationVideo(int $productId, string $videoPath): ?string
+    {
+        $existing = $this->fetch(
+            'SELECT video_path FROM product_rotation_videos WHERE product_id = :product_id',
+            ['product_id' => $productId]
+        );
+
+        if ($existing) {
+            $this->update(
+                'product_rotation_videos',
+                ['video_path' => $videoPath],
+                'product_id = :product_id',
+                ['product_id' => $productId]
+            );
+            return $existing['video_path'];
+        }
+
+        $this->insert('product_rotation_videos', [
+            'product_id' => $productId,
+            'video_path' => $videoPath,
+        ]);
+        return null;
+    }
+
+    public function removeRotationVideo(int $productId): ?string
+    {
+        $existing = $this->fetch(
+            'SELECT video_path FROM product_rotation_videos WHERE product_id = :product_id',
+            ['product_id' => $productId]
+        );
+        if (!$existing) {
+            return null;
+        }
+
+        $this->delete('product_rotation_videos', 'product_id = :product_id', ['product_id' => $productId]);
+        return $existing['video_path'];
     }
 
     /**

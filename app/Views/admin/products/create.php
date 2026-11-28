@@ -41,6 +41,11 @@
                         <label class="form-label fw-bold">Tải nhiều ảnh (JPG, PNG, WebP; tối đa 8 ảnh, 5 MB/ảnh)</label>
                         <input type="file" name="images[]" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Video xoay sản phẩm (MP4, tối đa 50 MB)</label>
+                        <input type="file" name="rotation_video" class="form-control" accept="video/mp4,.mp4">
+                        <div class="form-text">Video sẽ tự phát lặp lại trên trang chi tiết sản phẩm.</div>
+                    </div>
                     <div>
                         <label class="form-label fw-bold">Hoặc thêm ảnh bằng URL</label>
                         <input type="url" name="image_url" class="form-control" placeholder="https://...">
